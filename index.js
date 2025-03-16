@@ -6,7 +6,6 @@ const config = require("./config");
 //Http Server Ping
 const express = require("express");
 const app = express();
-const port = 3000;
 
 // Set up a simple route that responds when pinged
 app.get("/", (req, res) => {
@@ -14,8 +13,8 @@ app.get("/", (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Server listening at http://localhost:${process.env.PORT}`);
 });
 
 // Initialize Discord client with necessary intents
@@ -57,20 +56,59 @@ client.on(Events.MessageCreate, (message) => {
       // Check if the person is working today
       const isWorking = config.workSchedule.includes(today);
 
-      // Respond accordingly
-      if (isWorking) {
-        message.reply(`Yes, ${config.personName} is working today.`);
-      } else {
-        message.reply(`No, ${config.personName} is not working today.`);
-      }
+      // Arrays of possible emojis
+      const workingEmojis = ['💼', '👔', '⏰', '📊', '👨‍💻'];
+      const notWorkingEmojis = ['🎮', '🏖️', '😎', '🎉', '🍕'];
+      
+      // Arrays of possible responses
+      const workingResponses = [
+        `Yep, ${config.personName} is definitely working today! 💼`,
+        `According to my detective skills, ${config.personName} is at work today. 🕵️`,
+        `My calendar says ${config.personName} is earning that paycheck today! 💰`,
+        `${config.personName} is definitely on the clock today.`,
+        `Work day alert! ${config.personName} is busy with work stuff today.`
+      ];
+      
+      const notWorkingResponses = [
+        `Nope! ${config.personName} is free today! 🎉`,
+        `My investigation shows ${config.personName} is OFF today! 🏖️`,
+        `${config.personName} is not working today. Time to plan something fun!`,
+        `According to my records, ${config.personName} has the day off! 🎮`,
+        `Good news! ${config.personName} isn't working today. Bad news! They have no excuse to ignore your messages.`
+      ];
+
+      // Select random emoji and response
+      const emojis = isWorking ? workingEmojis : notWorkingEmojis;
+      const responses = isWorking ? workingResponses : notWorkingResponses;
+      
+      const randomEmojiIndex = Math.floor(Math.random() * emojis.length);
+      const randomResponseIndex = Math.floor(Math.random() * responses.length);
+      
+      // Add reaction with emoji
+      message.react(emojis[randomEmojiIndex])
+        .catch(error => console.error("Failed to react with emoji:", error));
+      
+      // Reply with random response
+      message.reply(responses[randomResponseIndex]);
     } else if (
       content.includes("working") &&
       content.includes(config.personName.toLowerCase())
     ) {
       // Handle similar queries with error handling
-      message.reply(
+      const errorResponses = [
         `I can only tell you if ${config.personName} is working today. Please ask "is ${config.personName} working today?"`,
-      );
+        `Hmm, not sure what you're asking. Try "is ${config.personName} working today?"`,
+        `I'm programmed to answer if ${config.personName} is working today. Please be more specific!`,
+        `Try asking me "is ${config.personName} working today?" - that's what I understand best!`,
+        `Sorry, I didn't catch that. Ask me "is ${config.personName} working today?"`
+      ];
+      
+      const randomIndex = Math.floor(Math.random() * errorResponses.length);
+      const randomEmoji = ['🤔', '❓', '🙄', '😕', '🧐'][Math.floor(Math.random() * 5)];
+      
+      message.react(randomEmoji)
+        .catch(error => console.error("Failed to react with emoji:", error));
+      message.reply(errorResponses[randomIndex]);
     }
   }
 });

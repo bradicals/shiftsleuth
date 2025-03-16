@@ -6,12 +6,17 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["discord", "bot", "schedule"],
+  "keywords": [
+    "discord",
+    "bot",
+    "schedule"
+  ],
   "author": "",
   "license": "ISC",
   "description": "A Discord bot that checks if a specific person is working on the current date",
   "dependencies": {
     "discord.js": "^14.18.0",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
   }
 }
