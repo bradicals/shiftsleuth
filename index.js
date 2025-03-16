@@ -103,11 +103,7 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
       message.guild.members.fetch()
         .then(members => {
           // Find the member with the matching name
-          const personMember = members.find(member => 
-            member.displayName.toLowerCase().includes(config.personName.toLowerCase()) || 
-            (member.nickname && member.nickname.toLowerCase().includes(config.personName.toLowerCase())) ||
-            member.user.username.toLowerCase().includes(config.personName.toLowerCase())
-          );
+          const personMember = "salocinosegoj"
           
           if (personMember) {
             // Ping with custom message
