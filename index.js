@@ -100,7 +100,7 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
                content.includes(config.personName.toLowerCase())) {
       
       // Direct ping using the known username
-      const nicUserId = "salocinosegoj";
+      const nicUserId = 691311987170476123;
       
       // Ping with custom message
       message.channel.send(`Dude...duUUuuder...dUUDERNELLY <@${nicUserId}>`);
