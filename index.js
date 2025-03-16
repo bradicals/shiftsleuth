@@ -47,6 +47,10 @@ client.on(Events.MessageCreate, (message) => {
     // Define regex to match queries like "is [name] working today?"
     const workingRegex = new RegExp(
       `${config.personName.toLowerCase()} work`,
+      `${config.personName.toLowerCase()} at work`,
+      `${config.personName.toLowerCase()}`,
+      `work`,
+      `?`, 
     );
 
     // Check for introduction request
