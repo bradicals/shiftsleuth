@@ -103,12 +103,16 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
       message.guild.members.fetch()
         .then(members => {
           // Find the member with the matching name
-          const personMember = 'salocinosegoj'
+          const personMember = members.find(member => 
+            member.displayName.toLowerCase().includes(config.personName.toLowerCase()) || 
+            (member.nickname && member.nickname.toLowerCase().includes(config.personName.toLowerCase())) ||
+            member.user.username.toLowerCase().includes(config.personName.toLowerCase())
+          );
           
           if (personMember) {
             // Ping with custom message
             message.channel.send(`Dude...duUUuuder...dUUDERNELLY <@${personMember.id}>`);
-            message.react('📢',)
+            message.react('📢')
               .catch(error => console.error("Failed to react with emoji:", error));
           } else {
             // Person not found in server
@@ -122,7 +126,7 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
           message.reply(`I tried to ping ${config.personName} but ran into an error.`);
         });
       
-    } else if (workingRegex.test(content)) {
+    } else if (isWorkQuestion()) {
       // Get the current date in YYYY-MM-DD format
       const today = new Date().toISOString().split("T")[0];
 
@@ -163,17 +167,14 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
       
       // Reply with random response
       message.reply(responses[randomResponseIndex]);
-    } else if (
-      content.includes("working") &&
-      content.includes(config.personName.toLowerCase())
-    ) {
-      // Handle similar queries with error handling
+    } else if (containsPersonName || containsWork) {
+      // Handle any remaining messages that might be work-related but don't match our patterns
       const errorResponses = [
-        `I can only tell you if ${config.personName} is working today. Please ask "is ${config.personName} working today?"`,
-        `Hmm, not sure what you're asking. Try "is ${config.personName} working today?"`,
-        `I'm programmed to answer if ${config.personName} is working today. Please be more specific!`,
+        `I can tell you if ${config.personName} is working today. Just ask me directly!`,
+        `Hmm, not sure what you're asking. Try mentioning me and asking about ${config.personName}'s work schedule.`,
+        `I'm the oracle of ${config.personName}'s work schedule! Ask me if they're working today.`,
         `Try asking me "is ${config.personName} working today?" - that's what I understand best!`,
-        `Sorry, I didn't catch that. Ask me "is ${config.personName} working today?"`
+        `Not sure I understand. Want to know if ${config.personName} is working? Just ask!`
       ];
       
       const randomIndex = Math.floor(Math.random() * errorResponses.length);
