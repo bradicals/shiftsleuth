@@ -46,7 +46,7 @@ client.on(Events.MessageCreate, (message) => {
 
     // Define regex to match queries like "is [name] working today?"
     const workingRegex = new RegExp(
-      `is ${config.personName.toLowerCase()} working\??`,
+      `${config.personName.toLowerCase()} work`,
     );
 
     // Check for introduction request
@@ -72,6 +72,37 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
       
       // Send introduction
       message.reply(introMessage);
+      
+    // Check for ping/page request
+    } else if ((content.includes("ping") || 
+                content.includes("page") || 
+                content.includes("summon") || 
+                content.includes("call") || 
+                content.includes("get")) && 
+               content.includes(config.personName.toLowerCase())) {
+      
+      // Find the person in the server members
+      message.guild.members.fetch()
+        .then(members => {
+          // Find the member with the matching name
+          const personMember = 'salocinosegoj'
+          
+          if (personMember) {
+            // Ping with custom message
+            message.channel.send(`Dude...duUUuuder...dUUDERNELLY <@${personMember.id}>`);
+            message.react('📢',)
+              .catch(error => console.error("Failed to react with emoji:", error));
+          } else {
+            // Person not found in server
+            message.reply(`I can't find ${config.personName} in this server to ping them.`);
+            message.react('❓')
+              .catch(error => console.error("Failed to react with emoji:", error));
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching members:", error);
+          message.reply(`I tried to ping ${config.personName} but ran into an error.`);
+        });
       
     } else if (workingRegex.test(content)) {
       // Get the current date in YYYY-MM-DD format
