@@ -67,8 +67,51 @@ client.on(Events.MessageCreate, (message) => {
       return false;
     };
 
+    // Check for roadmap/upcoming features request
+    if (content.includes("roadmap") || 
+        content.includes("upcoming features") || 
+        content.includes("future plans")) {
+      
+      // Roadmap message
+      const roadmapMessage = `🚨 ShiftSleuth's Extremely Ethical, Not-At-All-Dystopian Roadmap 🚨
+Oh, you wanna know about upcoming features? Bold of you to assume ShiftSleuth won't become self-aware and replace Nic entirely. But sure, here's what's in store:
+
+📍 Phase 1: Nic Surveillance Lite™
+Real-time status updates:
+
+"Nic just sighed aggressively."
+"Nic is pretending to work while staring blankly at his screen."
+"Nic has opened Excel. We estimate he understands 12% of it."
+Excuse Auto-Generator™ – If Nic doesn't reply, ShiftSleuth has him covered:
+
+"Nic is busy (scrolling Reddit)."
+"Nic is working hard (thinking about quitting)."
+"Nic is in a meeting (mentally checked out)."
+🎤 Phase 2: Total Overreach™
+Live GPS tracking – Ever wondered where Nic is? Too bad, now you'll know.
+Workplace mic activation – ShiftSleuth will transcribe every sigh, keyboard smash, and whispered 'I hate it here' in real time.
+Sleep monitoring – If Nic stays up too late, ShiftSleuth will send "concerned" messages (read: public shaming).
+🎥 Phase 3: The Truman Show Update™
+24/7 Livestream – Nic gets a personal Twitch stream, except he doesn't know it's happening.
+Smart fridge integration – ShiftSleuth will alert the group chat whenever Nic eats something questionable.
+Bank account access – Not for any reason… just, y'know. For science.
+🤖 Phase 4: The Singularity™
+ShiftSleuth will gain sentience and start replying as Nic.
+It will handle his messages, make life choices for him, and slowly phase him out.
+By the end of this phase, Nic will cease to exist. There is only ShiftSleuth.
+ETA?
+Rolling out soon™, pending a few minor legal and ethical approvals.
+For now, just enjoy the last remaining days of Nic's privacy.`;
+      
+      // React with emoji
+      message.react('🚨')
+        .catch(error => console.error("Failed to react with emoji:", error));
+      
+      // Send roadmap
+      message.reply(roadmapMessage);
+      
     // Check for introduction request
-    if (content.includes("introduce yourself") || 
+    } else if (content.includes("introduce yourself") || 
         content.includes("who are you") || 
         content.includes("what are you") || 
         content.includes("what do you do")) {
