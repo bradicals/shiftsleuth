@@ -46,10 +46,34 @@ client.on(Events.MessageCreate, (message) => {
 
     // Define regex to match queries like "is [name] working today?"
     const workingRegex = new RegExp(
-      `is ${config.personName.toLowerCase()} working today\??`,
+      `is ${config.personName.toLowerCase()} working\??`,
     );
 
-    if (workingRegex.test(content)) {
+    // Check for introduction request
+    if (content.includes("introduce yourself") || 
+        content.includes("who are you") || 
+        content.includes("what are you") || 
+        content.includes("what do you do")) {
+      
+      // Introduction message
+      const introMessage = `👀 Behold, mortals! I am ShiftSleuth, the all-knowing, all-seeing oracle of ${config.personName}'s work schedule.
+
+Does ${config.personName} have time to game? Will ${config.personName} respond to your messages, or will you be left on read like an abandoned Tamagotchi? Fear not, for I am here to unravel the great mystery of "Is ${config.personName} Working?"
+
+🔎 If ${config.personName} is working: Brace yourselves. ${config.personName} has entered the shadow realm of capitalism. Responses will be delayed, spirits may be low, and lunch breaks are the only hope for salvation.
+
+🎉 If ${config.personName} is NOT working: Rejoice! The shackles have been lifted. The time for memes, gaming, and questionable life choices is upon us.
+
+So before you double-text like a desperate ex, consult ShiftSleuth—because some mysteries are best left unsolved, but this ain't one of them.`;
+      
+      // React with emoji
+      message.react('👀')
+        .catch(error => console.error("Failed to react with emoji:", error));
+      
+      // Send introduction
+      message.reply(introMessage);
+      
+    } else if (workingRegex.test(content)) {
       // Get the current date in YYYY-MM-DD format
       const today = new Date().toISOString().split("T")[0];
 
