@@ -44,14 +44,28 @@ client.on(Events.MessageCreate, (message) => {
     // Extract the message content
     const content = message.content.toLowerCase();
 
-    // Define regex to match queries like "is [name] working today?"
-    const workingRegex = new RegExp(
-      `${config.personName.toLowerCase()} work`,
-      `${config.personName.toLowerCase()} at work`,
-      `${config.personName.toLowerCase()}`,
-      `work`,
-      `?`, 
-    );
+    // Check if message contains these keywords for work status inquiries
+    const containsPersonName = content.includes(config.personName.toLowerCase());
+    const containsWork = content.includes("work");
+    const containsQuestionMark = content.includes("?");
+    
+    // Function to check if content matches any work-related phrases
+    const isWorkQuestion = () => {
+      // More specific work phrases
+      if (content.includes(`${config.personName.toLowerCase()} work`) ||
+          content.includes(`${config.personName.toLowerCase()} at work`) ||
+          content.includes(`is ${config.personName.toLowerCase()} working`)) {
+        return true;
+      }
+      
+      // If it has both person's name and work, or just person's name with a question mark
+      if ((containsPersonName && containsWork) || 
+          (containsPersonName && containsQuestionMark)) {
+        return true;
+      }
+      
+      return false;
+    };
 
     // Check for introduction request
     if (content.includes("introduce yourself") || 
