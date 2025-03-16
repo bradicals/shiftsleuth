@@ -99,28 +99,13 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
                 content.includes("get")) && 
                content.includes(config.personName.toLowerCase())) {
       
-      // Find the person in the server members
-      message.guild.members.fetch()
-        .then(members => {
-          // Find the member with the matching name
-          const personMember = "salocinosegoj"
-          
-          if (personMember) {
-            // Ping with custom message
-            message.channel.send(`Dude...duUUuuder...dUUDERNELLY <@${personMember.id}>`);
-            message.react('📢')
-              .catch(error => console.error("Failed to react with emoji:", error));
-          } else {
-            // Person not found in server
-            message.reply(`I can't find ${config.personName} in this server to ping them.`);
-            message.react('❓')
-              .catch(error => console.error("Failed to react with emoji:", error));
-          }
-        })
-        .catch(error => {
-          console.error("Error fetching members:", error);
-          message.reply(`I tried to ping ${config.personName} but ran into an error.`);
-        });
+      // Direct ping using the known username
+      const nicUserId = "salocinosegoj";
+      
+      // Ping with custom message
+      message.channel.send(`Dude...duUUuuder...dUUDERNELLY <@${nicUserId}>`);
+      message.react('📢')
+        .catch(error => console.error("Failed to react with emoji:", error));
       
     } else if (isWorkQuestion()) {
       // Get the current date in YYYY-MM-DD format
