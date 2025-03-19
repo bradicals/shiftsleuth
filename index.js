@@ -82,11 +82,17 @@ function handleDateSpecificWorkInquiry(message, dateObj) {
   // Format the date for display
   const formattedDate = dateUtils.formatDateForDisplay(dateObj);
   
+  // Check if the date is today or in the future
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
+  dateObj.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
+  const isToday = today.getTime() === dateObj.getTime(); // Compare timestamps for accurate comparison
+  
   // If it's a holiday, give a special response about the holiday
   if (holiday) {
     const responseTemplate = isWorking 
-      ? responses.getRandomResponse(responses.holidayWorking)
-      : responses.getRandomResponse(responses.holidayNotWorking);
+      ? responses.getRandomResponse(isToday ? responses.holidayWorking : responses.futureHolidayWorking)
+      : responses.getRandomResponse(isToday ? responses.holidayNotWorking : responses.futureHolidayNotWorking);
     
     // Replace placeholders with actual values
     const response = responseTemplate
@@ -100,14 +106,14 @@ function handleDateSpecificWorkInquiry(message, dateObj) {
     return message.reply(response);
   }
   
-  // Regular work day response
+  // Regular work day response - use future tense for future dates
   const emoji = isWorking 
     ? config.getRandomEmoji('working') 
     : config.getRandomEmoji('notWorking');
   
   const response = isWorking
-    ? responses.getRandomResponse(responses.workingResponses)
-    : responses.getRandomResponse(responses.notWorkingResponses);
+    ? responses.getRandomResponse(isToday ? responses.workingResponses : responses.futureWorkingResponses)
+    : responses.getRandomResponse(isToday ? responses.notWorkingResponses : responses.futureNotWorkingResponses);
   
   // Add a prefix with the date
   const datePrefix = `On ${formattedDate}: `;

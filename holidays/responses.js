@@ -28,6 +28,34 @@ module.exports = {
     `Congratulations! You've caught Nic on a day off. Use this power wisely - suggest plans that involve him leaving the house just to watch him panic.`
   ],
   
+  // Future tense responses for when Nic will be working
+  futureWorkingResponses: [
+    `Yep, Nic will be trapped in the corporate matrix that day. Send help... or coffee. 💼`,
+    `The bad news? Nic will be at work. The good news? At least someone will be paying his bills! 🕵️`,
+    `Nic will be pretending to look busy while his soul slowly leaves his body. Classic workday! 💰`,
+    `ALERT: Nic will be in his natural habitat - staring blankly at spreadsheets and contemplating a career change.`,
+    `Work day confirmed! Nic will be busy doing... well, whatever it is Nic does. I've been watching him for months and I'm still not sure.`,
+    `Nic will indeed be working that day. Please leave a message after the existential crisis. *beep*`,
+    `Working status: Affirmative. Productivity status: Let's not ask questions we don't want answers to.`,
+    `Yes, Nic will be "working" that day. The air quotes are doing a lot of heavy lifting in that sentence.`,
+    `Nic will be working, which will explain why he'll be staring at his coffee for 20 minutes contemplating his life choices.`,
+    `Work mode will be activated! Nic will be toggling between looking productive and checking how much PTO he has left.`
+  ],
+  
+  // Future tense responses for when Nic will NOT be working
+  futureNotWorkingResponses: [
+    `FREEDOM! Nic will NOT be working that day. Expect rapid responses unless he's busy pretending he has a life. 🎉`,
+    `My investigation shows Nic will be FREE that day! Though "free" is a relative term when you've seen his gaming backlog. 🏖️`,
+    `Breaking news: Nic won't be working that day, so he will have absolutely zero excuse for ignoring your messages. Call him out!`,
+    `Nope! Nic will be off that day, which means he'll either be gaming or contemplating cleaning his room (but definitely not actually cleaning it).`,
+    `Good news: Nic will be off work! Bad news: He'll still take 5 hours to respond because he'll be "in the zone" with whatever game he's obsessing over.`,
+    `Nic won't be working! Alert the media! This rare occasion should be documented for scientific study.`,
+    `Day off confirmed! Nic will be free to do what he does best: absolutely nothing productive whatsoever.`,
+    `Nic will have the day off, which means he'll be in his natural state: horizontal on the couch with snacks within arm's reach.`,
+    `NOT WORKING ALERT: If you need Nic, check Discord, then check Steam, then check if he's napping. In that order.`,
+    `Congratulations! You've caught Nic on a day off. Use this power wisely - suggest plans that involve him leaving the house just to watch him panic.`
+  ],
+  
   // Responses for date pattern questions
   dateResponses: {
     askingAboutPast: [
@@ -55,7 +83,7 @@ module.exports = {
     ]
   },
   
-  // Responses for holidays
+  // Responses for holidays (present tense)
   holidayWorking: [
     `Technically Nic is scheduled to work on {holiday}, but let's be real - his productivity will be lower than my respect for his fashion choices. {emoji}`,
     `Yes, poor Nic is working on {holiday}. Send him some {emoji} to ease the pain.`,
@@ -69,6 +97,23 @@ module.exports = {
     `FREE as a bird on {holiday}! Expect Nic to be {emoji} celebrating inappropriately.`,
     `It's {holiday} and Nic is off work! Though with how he celebrates, he might call in sick the next day too. {emoji}`,
     `{holiday} freedom confirmed! {emoji} Nic is free to do what he does best - absolutely nothing productive.`,
+    `Not working on {holiday}! {emoji} Time for Nic to pretend he has actual holiday plans beyond gaming in pajamas.`
+  ],
+  
+  // Future tense responses for holidays
+  futureHolidayWorking: [
+    `Technically Nic will be scheduled to work on {holiday}, but let's be real - his productivity will be lower than my respect for his fashion choices. {emoji}`,
+    `Yes, poor Nic will be working on {holiday}. Send him some {emoji} to ease the pain.`,
+    `Working on {holiday}? Nic's boss must REALLY love him. {emoji}`,
+    `Confirmed: Nic will be working through {holiday}. Please respect his suffering. {emoji}`,
+    `The universe will curse Nic to work on {holiday}. Press F to pay respects. {emoji}`
+  ],
+  
+  futureHolidayNotWorking: [
+    `Good news! Nic will NOT be working on {holiday}! Let the {emoji} festivities begin!`,
+    `FREE as a bird on {holiday}! Expect Nic to be {emoji} celebrating inappropriately.`,
+    `It will be {holiday} and Nic will be off work! Though with how he celebrates, he might call in sick the next day too. {emoji}`,
+    `{holiday} freedom confirmed! {emoji} Nic will be free to do what he does best - absolutely nothing productive.`,
     `Not working on {holiday}! {emoji} Time for Nic to pretend he has actual holiday plans beyond gaming in pajamas.`
   ],
   
