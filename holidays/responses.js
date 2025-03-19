@@ -2,58 +2,58 @@
 module.exports = {
   // Responses for when Nic is working
   workingResponses: [
-    `Yep, Nic is trapped in the corporate matrix today. Send help... or coffee. 💼`,
-    `The bad news? Nic is at work. The good news? At least someone's paying his bills! 🕵️`,
-    `Nic is currently pretending to look busy while his soul slowly leaves his body. Classic workday! 💰`,
-    `ALERT: Nic has been spotted in his natural habitat - staring blankly at spreadsheets and contemplating a career change.`,
-    `Work day confirmed! Nic is busy doing... well, whatever it is Nic does. I've been watching him for months and I'm still not sure.`,
-    `Nic is indeed working today. Please leave a message after the existential crisis. *beep*`,
-    `Working status: Affirmative. Productivity status: Let's not ask questions we don't want answers to.`,
+    `Yep, Nic is trapped in the milk plant today. Send help... or calcium supplements. 🥛`,
+    `The bad news? Nic is at the milk plant. The good news? At least someone's paying his bills! 🕵️`,
+    `Nic is currently pretending to look busy while his soul slowly leaves his body. Classic milk plant shift! 💰`,
+    `ALERT: Nic has been spotted in his natural habitat - staring blankly at milk tanks and contemplating a career change.`,
+    `Work day confirmed! Nic is busy processing milk... well, whatever it is Nic actually does there. I've been watching him for months and I'm still not sure.`,
+    `Nic is indeed working today. Please leave a message after the pasteurization process. *beep*`,
+    `Working status: Affirmative. Dairy productivity status: Let's not ask questions we don't want answers to.`,
     `Yes, Nic is "working" today. The air quotes are doing a lot of heavy lifting in that sentence.`,
-    `Nic is working today, which explains why he's been staring at his coffee for 20 minutes contemplating his life choices.`,
-    `Work mode activated! Nic's currently toggling between looking productive and checking how much PTO he has left.`
+    `Nic is working today, which explains why he's been staring at milk cartons for 20 minutes contemplating his life choices.`,
+    `Milk plant mode activated! Nic's currently toggling between looking productive and checking how much PTO he has left.`
   ],
   
   // Responses for when Nic is NOT working
   notWorkingResponses: [
-    `FREEDOM! Nic is NOT working today. Expect rapid responses unless he's busy pretending he has a life. 🎉`,
-    `My investigation shows Nic is FREE today! Though "free" is a relative term when you've seen his gaming backlog. 🏖️`,
-    `Breaking news: Nic isn't working today, so he has absolutely zero excuse for ignoring your messages. Call him out!`,
-    `Nope! Nic is off today, which means he's either gaming or contemplating cleaning his room (but definitely not actually cleaning it).`,
-    `Good news: Nic is off work today! Bad news: He's still going to take 5 hours to respond because he's "in the zone" with whatever game he's obsessing over.`,
-    `Nic isn't working! Alert the media! This rare occasion should be documented for scientific study.`,
-    `Day off confirmed! Nic is free to do what he does best: absolutely nothing productive whatsoever.`,
-    `Nic has the day off, which means he's currently in his natural state: horizontal on the couch with snacks within arm's reach.`,
+    `FREEDOM! Nic is NOT milking cows today. Expect rapid responses unless he's busy pretending he has a life. 🎉`,
+    `My investigation shows Nic is FREE today! No milk plant shift. Though "free" is a relative term when you've seen his gaming backlog. 🏖️`,
+    `Breaking news: Nic isn't at the milk plant today, so he has absolutely zero excuse for ignoring your messages. Call him out!`,
+    `Nope! Nic is off dairy duty today, which means he's either gaming or contemplating cleaning his room (but definitely not actually cleaning it).`,
+    `Good news: Nic is off milk plant duty today! Bad news: He's still going to take 5 hours to respond because he's "in the zone" with whatever game he's obsessing over.`,
+    `Nic isn't working! No milk processing today! Alert the media! This rare occasion should be documented for scientific study.`,
+    `Day off from the milk plant confirmed! Nic is free to do what he does best: absolutely nothing productive whatsoever.`,
+    `Nic has the day off from dairy duties, which means he's currently in his natural state: horizontal on the couch with snacks within arm's reach.`,
     `NOT WORKING ALERT: If you need Nic, check Discord, then check Steam, then check if he's napping. In that order.`,
-    `Congratulations! You've caught Nic on a day off. Use this power wisely - suggest plans that involve him leaving the house just to watch him panic.`
+    `Congratulations! You've caught Nic on a milk plant holiday. Use this power wisely - suggest plans that involve him leaving the house just to watch him panic.`
   ],
   
   // Future tense responses for when Nic will be working
   futureWorkingResponses: [
-    `Yep, Nic will be trapped in the corporate matrix that day. Send help... or coffee. 💼`,
-    `The bad news? Nic will be at work. The good news? At least someone will be paying his bills! 🕵️`,
-    `Nic will be pretending to look busy while his soul slowly leaves his body. Classic workday! 💰`,
-    `ALERT: Nic will be in his natural habitat - staring blankly at spreadsheets and contemplating a career change.`,
-    `Work day confirmed! Nic will be busy doing... well, whatever it is Nic does. I've been watching him for months and I'm still not sure.`,
-    `Nic will indeed be working that day. Please leave a message after the existential crisis. *beep*`,
-    `Working status: Affirmative. Productivity status: Let's not ask questions we don't want answers to.`,
+    `Yep, Nic will be trapped in the milk plant that day. Send help... or calcium supplements. 🥛`,
+    `The bad news? Nic will be at the milk plant. The good news? At least someone will be paying his bills! 🕵️`,
+    `Nic will be pretending to look busy while his soul slowly leaves his body. Classic milk plant shift! 💰`,
+    `ALERT: Nic will be in his natural habitat - staring blankly at milk tanks and contemplating a career change.`,
+    `Work day confirmed! Nic will be busy processing milk... well, whatever it is Nic actually does there. I've been watching him for months and I'm still not sure.`,
+    `Nic will indeed be working that day. Please leave a message after the pasteurization process. *beep*`,
+    `Working status: Affirmative. Dairy productivity status: Let's not ask questions we don't want answers to.`,
     `Yes, Nic will be "working" that day. The air quotes are doing a lot of heavy lifting in that sentence.`,
-    `Nic will be working, which will explain why he'll be staring at his coffee for 20 minutes contemplating his life choices.`,
-    `Work mode will be activated! Nic will be toggling between looking productive and checking how much PTO he has left.`
+    `Nic will be working, which will explain why he'll be staring at milk cartons for 20 minutes contemplating his life choices.`,
+    `Milk plant mode will be activated! Nic will be toggling between looking productive and checking how much PTO he has left.`
   ],
   
   // Future tense responses for when Nic will NOT be working
   futureNotWorkingResponses: [
-    `FREEDOM! Nic will NOT be working that day. Expect rapid responses unless he's busy pretending he has a life. 🎉`,
-    `My investigation shows Nic will be FREE that day! Though "free" is a relative term when you've seen his gaming backlog. 🏖️`,
-    `Breaking news: Nic won't be working that day, so he will have absolutely zero excuse for ignoring your messages. Call him out!`,
-    `Nope! Nic will be off that day, which means he'll either be gaming or contemplating cleaning his room (but definitely not actually cleaning it).`,
-    `Good news: Nic will be off work! Bad news: He'll still take 5 hours to respond because he'll be "in the zone" with whatever game he's obsessing over.`,
-    `Nic won't be working! Alert the media! This rare occasion should be documented for scientific study.`,
-    `Day off confirmed! Nic will be free to do what he does best: absolutely nothing productive whatsoever.`,
-    `Nic will have the day off, which means he'll be in his natural state: horizontal on the couch with snacks within arm's reach.`,
+    `FREEDOM! Nic will NOT be milking cows that day. Expect rapid responses unless he's busy pretending he has a life. 🎉`,
+    `My investigation shows Nic will be FREE that day! No milk plant shift. Though "free" is a relative term when you've seen his gaming backlog. 🏖️`,
+    `Breaking news: Nic won't be at the milk plant that day, so he will have absolutely zero excuse for ignoring your messages. Call him out!`,
+    `Nope! Nic will be off dairy duty that day, which means he'll either be gaming or contemplating cleaning his room (but definitely not actually cleaning it).`,
+    `Good news: Nic will be off milk plant duty! Bad news: He'll still take 5 hours to respond because he'll be "in the zone" with whatever game he's obsessing over.`,
+    `Nic won't be working! No milk processing that day! Alert the media! This rare occasion should be documented for scientific study.`,
+    `Day off from the milk plant confirmed! Nic will be free to do what he does best: absolutely nothing productive whatsoever.`,
+    `Nic will have the day off from dairy duties, which means he'll be in his natural state: horizontal on the couch with snacks within arm's reach.`,
     `NOT WORKING ALERT: If you need Nic, check Discord, then check Steam, then check if he's napping. In that order.`,
-    `Congratulations! You've caught Nic on a day off. Use this power wisely - suggest plans that involve him leaving the house just to watch him panic.`
+    `Congratulations! You've caught Nic on a milk plant holiday. Use this power wisely - suggest plans that involve him leaving the house just to watch him panic.`
   ],
   
   // Responses for date pattern questions
@@ -85,36 +85,36 @@ module.exports = {
   
   // Responses for holidays (present tense)
   holidayWorking: [
-    `Technically Nic is scheduled to work on {holiday}, but let's be real - his productivity will be lower than my respect for his fashion choices. {emoji}`,
-    `Yes, poor Nic is working on {holiday}. Send him some {emoji} to ease the pain.`,
-    `Working on {holiday}? Nic's boss must REALLY love him. {emoji}`,
-    `Confirmed: Nic is working through {holiday}. Please respect his suffering. {emoji}`,
-    `The universe has cursed Nic to work on {holiday}. Press F to pay respects. {emoji}`
+    `Technically Nic is scheduled for milk plant duty on {holiday}, but let's be real - his productivity will be lower than my respect for his fashion choices. {emoji}`,
+    `Yes, poor Nic is processing milk on {holiday}. Send him some {emoji} to ease the pain.`,
+    `Working at the milk plant on {holiday}? Nic's dairy supervisor must REALLY love him. {emoji}`,
+    `Confirmed: Nic is working the milk tanks through {holiday}. Please respect his lactose-laden suffering. {emoji}`,
+    `The universe has cursed Nic to pasteurize milk on {holiday}. Press F to pay respects. {emoji}`
   ],
   
   holidayNotWorking: [
-    `Good news! Nic is NOT working on {holiday}! Let the {emoji} festivities begin!`,
-    `FREE as a bird on {holiday}! Expect Nic to be {emoji} celebrating inappropriately.`,
-    `It's {holiday} and Nic is off work! Though with how he celebrates, he might call in sick the next day too. {emoji}`,
-    `{holiday} freedom confirmed! {emoji} Nic is free to do what he does best - absolutely nothing productive.`,
-    `Not working on {holiday}! {emoji} Time for Nic to pretend he has actual holiday plans beyond gaming in pajamas.`
+    `Good news! Nic is NOT at the milk plant on {holiday}! Let the {emoji} festivities begin!`,
+    `FREE from dairy duties on {holiday}! Expect Nic to be {emoji} celebrating inappropriately.`,
+    `It's {holiday} and Nic is off milk plant duty! Though with how he celebrates, he might call in sick the next day too. {emoji}`,
+    `{holiday} freedom from milk processing confirmed! {emoji} Nic is free to do what he does best - absolutely nothing productive.`,
+    `Not working at the milk plant on {holiday}! {emoji} Time for Nic to pretend he has actual holiday plans beyond gaming in pajamas.`
   ],
   
   // Future tense responses for holidays
   futureHolidayWorking: [
-    `Technically Nic will be scheduled to work on {holiday}, but let's be real - his productivity will be lower than my respect for his fashion choices. {emoji}`,
-    `Yes, poor Nic will be working on {holiday}. Send him some {emoji} to ease the pain.`,
-    `Working on {holiday}? Nic's boss must REALLY love him. {emoji}`,
-    `Confirmed: Nic will be working through {holiday}. Please respect his suffering. {emoji}`,
-    `The universe will curse Nic to work on {holiday}. Press F to pay respects. {emoji}`
+    `Technically Nic will be scheduled for milk plant duty on {holiday}, but let's be real - his productivity will be lower than my respect for his fashion choices. {emoji}`,
+    `Yes, poor Nic will be processing milk on {holiday}. Send him some {emoji} to ease the pain.`,
+    `Working at the milk plant on {holiday}? Nic's dairy supervisor must REALLY love him. {emoji}`,
+    `Confirmed: Nic will be working the milk tanks through {holiday}. Please respect his lactose-laden suffering. {emoji}`,
+    `The universe will curse Nic to pasteurize milk on {holiday}. Press F to pay respects. {emoji}`
   ],
   
   futureHolidayNotWorking: [
-    `Good news! Nic will NOT be working on {holiday}! Let the {emoji} festivities begin!`,
-    `FREE as a bird on {holiday}! Expect Nic to be {emoji} celebrating inappropriately.`,
-    `It will be {holiday} and Nic will be off work! Though with how he celebrates, he might call in sick the next day too. {emoji}`,
-    `{holiday} freedom confirmed! {emoji} Nic will be free to do what he does best - absolutely nothing productive.`,
-    `Not working on {holiday}! {emoji} Time for Nic to pretend he has actual holiday plans beyond gaming in pajamas.`
+    `Good news! Nic will NOT be at the milk plant on {holiday}! Let the {emoji} festivities begin!`,
+    `FREE from dairy duties on {holiday}! Expect Nic to be {emoji} celebrating inappropriately.`,
+    `It will be {holiday} and Nic will be off milk plant duty! Though with how he celebrates, he might call in sick the next day too. {emoji}`,
+    `{holiday} freedom from milk processing confirmed! {emoji} Nic will be free to do what he does best - absolutely nothing productive.`,
+    `Not working at the milk plant on {holiday}! {emoji} Time for Nic to pretend he has actual holiday plans beyond gaming in pajamas.`
   ],
   
   // Random responses when ShiftSleuth doesn't understand

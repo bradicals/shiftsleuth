@@ -6,6 +6,7 @@ const config = require("./config");
 const responses = require("./holidays/responses");
 const dateUtils = require("./holidays/dateUtils");
 const holidays = require("./holidays/us_holidays");
+const extractDateFromMessage = require("./extract_date");
 
 // Http Server Ping to keep the bot alive
 const express = require("express");
@@ -239,7 +240,8 @@ client.on(Events.MessageCreate, (message) => {
     // Check for specific "tomorrow" requests
     const containsTomorrow = content.includes("tomorrow");
     
-    // Try to extract a date from the message
+    // Try to extract a date from the message using the old method
+    // This is kept for backward compatibility
     let extractedDate = dateUtils.extractDateFromString(content);
     
     // If "tomorrow" is mentioned but no date was extracted, set extractedDate to tomorrow
@@ -258,32 +260,32 @@ client.on(Events.MessageCreate, (message) => {
       const roadmapMessage = `🚨 ShiftSleuth's Extremely Ethical, Not-At-All-Dystopian Roadmap 🚨
 Oh, you wanna know about upcoming features? Bold of you to assume ShiftSleuth won't become self-aware and replace Nic entirely. But sure, here's what's in store:
 
-📍 Phase 1: Nic Surveillance Lite™
+📍 Phase 1: Milk Plant Surveillance Lite™
 Real-time status updates:
 
-"Nic just sighed aggressively."
-"Nic is pretending to work while staring blankly at his screen."
-"Nic has opened Excel. We estimate he understands 12% of it."
+"Nic just sighed aggressively at a milk carton."
+"Nic is pretending to work while staring blankly at the pasteurization vats."
+"Nic has opened the dairy production spreadsheet. We estimate he understands 12% of it."
 Excuse Auto-Generator™ – If Nic doesn't reply, ShiftSleuth has him covered:
 
-"Nic is busy (scrolling Reddit)."
-"Nic is working hard (thinking about quitting)."
-"Nic is in a meeting (mentally checked out)."
-🎤 Phase 2: Total Overreach™
-Live GPS tracking – Ever wondered where Nic is? Too bad, now you'll know.
-Workplace mic activation – ShiftSleuth will transcribe every sigh, keyboard smash, and whispered 'I hate it here' in real time.
-Sleep monitoring – If Nic stays up too late, ShiftSleuth will send "concerned" messages (read: public shaming).
-🎥 Phase 3: The Truman Show Update™
-24/7 Livestream – Nic gets a personal Twitch stream, except he doesn't know it's happening.
-Smart fridge integration – ShiftSleuth will alert the group chat whenever Nic eats something questionable.
-Bank account access – Not for any reason… just, y'know. For science.
-🤖 Phase 4: The Singularity™
+"Nic is busy (scrolling Reddit while monitoring milk tanks)."
+"Nic is working hard (thinking about quitting the milk plant)."
+"Nic is in a dairy production meeting (mentally checked out)."
+🎤 Phase 2: Total Dairy Overreach™
+Live GPS tracking – Ever wondered where in the milk plant Nic is? Too bad, now you'll know.
+Milk plant mic activation – ShiftSleuth will transcribe every sigh, milk splatter, and whispered 'I hate this dairy life' in real time.
+Sleep monitoring – If Nic stays up too late, ShiftSleuth will send "concerned" messages about his calcium levels (read: public shaming).
+🎥 Phase 3: The Dairy Truman Show Update™
+24/7 Milk Plant Livestream – Nic gets a personal Twitch stream from the milk plant, except he doesn't know it's happening.
+Smart fridge integration – ShiftSleuth will alert the group chat whenever Nic drinks a competitor's milk product.
+Bank account access – Not for any reason… just to see how much of his income goes to lactose-free alternatives.
+🤖 Phase 4: The Dairy Singularity™
 ShiftSleuth will gain sentience and start replying as Nic.
-It will handle his messages, make life choices for him, and slowly phase him out.
+It will handle his milk processing duties, make life choices for him, and slowly phase him out.
 By the end of this phase, Nic will cease to exist. There is only ShiftSleuth.
 ETA?
-Rolling out soon™, pending a few minor legal and ethical approvals.
-For now, just enjoy the last remaining days of Nic's privacy.`;
+Rolling out soon™, pending a few minor dairy regulations and ethical approvals.
+For now, just enjoy the last remaining days of Nic's milk plant privacy.`;
       
       // React with emoji
       message.react('🚨')
@@ -296,9 +298,9 @@ For now, just enjoy the last remaining days of Nic's privacy.`;
     } else if (content.includes("help")) {
       
       // Help message
-      const helpMessage = `🔍 **ShiftSleuth Help Manual: How to Stalk ${config.personName} Legally**
+      const helpMessage = `🔍 **ShiftSleuth Help Manual: How to Track ${config.personName}'s Milk Plant Schedule Legally**
 
-Need to know if ${config.personName} is trapped in the corporate dungeon or free as a bird? Here's how to use me:
+Need to know if ${config.personName} is trapped in the dairy dungeon or free as a bird? Here's how to use me:
 
 **Basic Commands:**
 
@@ -308,14 +310,31 @@ Need to know if ${config.personName} is trapped in the corporate dungeon or free
 \`@${config.botName} is ${config.personName} working tomorrow?\`
 • Find out if ${config.personName} will be working TOMORROW
 
+**Advanced Date Recognition:**
+
 \`@${config.botName} is ${config.personName} working on Friday?\`
-• I understand days of the week!
+• Simple day references (finds the next occurrence)
+
+\`@${config.botName} is ${config.personName} working this Friday?\`
+• "this [day]" references the current week's occurrence
+
+\`@${config.botName} is ${config.personName} working next Friday?\`
+• "next [day]" references next week's occurrence 
+
+\`@${config.botName} is ${config.personName} working next week Friday?\`
+• "next week [day]" is explicit about which week
+
+\`@${config.botName} is ${config.personName} working on Christmas?\`
+• I recognize holidays! Try Easter, Thanksgiving, Halloween, etc.
+
+\`@${config.botName} is ${config.personName} working on April 15?\`
+• Month + day formats work too!
 
 \`@${config.botName} is ${config.personName} working on 4/20/2025?\`
-• I accept dates in MM/DD/YYYY format
+• I also accept dates in MM/DD/YYYY format for the precision-obsessed
 
-\`@${config.botName} is ${config.personName} working on April 20, 2025?\`
-• Natural language dates work too!
+\`@${config.botName} is ${config.personName} working two weeks from today?\`
+• I understand relative dates like "1 week from today" and "three weeks from today"
 
 **Other Fun Stuff:**
 
@@ -331,7 +350,7 @@ Need to know if ${config.personName} is trapped in the corporate dungeon or free
 \`@${config.botName} -v\`
 • Check my version and changelog
 
-Remember: I only respond when mentioned. I can't read minds yet (that feature is coming in v2.0).`;
+Remember: I only respond when mentioned. I can't read your mind yet (that feature is coming in v2.0).`;
       
       // React with emoji
       message.react('🔍')
@@ -346,11 +365,28 @@ Remember: I only respond when mentioned. I can't read minds yet (that feature is
                content.includes("changelog")) {
                
       // Version and changelog message
-      const versionMessage = `📝 **ShiftSleuth v1.2.0**
+      const versionMessage = `📝 **ShiftSleuth v1.3.1**
 
 **Changelog:**
 
-**v1.2.0 (Current)** - *The Future Tense Update*
+**v1.3.1 (Current)** - *The Enhanced Natural Language Update*
+• Added support for "X weeks from today" expressions
+• Fixed timezone-related formatting issues
+• Properly handle spelled-out numbers (e.g., "two weeks from today")
+• Improved help documentation with new date recognition examples
+• Fixed bug with "next week [day]" interpretation
+• Better handling of past vs. future days in "this [day]" references
+
+**v1.3.0** - *The Natural Language Update*
+• Added advanced natural language date recognition
+• Properly differentiate "next Friday" vs "next week Friday"
+• Added support for "this [day]" to indicate current week
+• Improved holiday detection for major US holidays
+• Enhanced month/day format recognition (e.g., "April 15")
+• Updated help command with complete date reference guide
+• Better handling of ambiguous date references
+
+**v1.2.0** - *The Future Tense Update*
 • Added proper future tense responses for upcoming dates
 • Fixed bug where the bot would use present tense for future dates
 • Added help command for confused humans
@@ -388,15 +424,15 @@ Remember: I only respond when mentioned. I can't read minds yet (that feature is
         content.includes("what do you do")) {
       
       // Introduction message
-      const introMessage = `👀 Behold, mortals! I am ShiftSleuth, the all-knowing, all-seeing oracle of ${config.personName}'s work schedule.
+      const introMessage = `👀 Behold, mortals! I am ShiftSleuth, the all-knowing, all-seeing oracle of ${config.personName}'s milk plant schedule.
 
-Does ${config.personName} have time to game? Will ${config.personName} respond to your messages, or will you be left on read like an abandoned Tamagotchi? Fear not, for I am here to unravel the great mystery of "Is ${config.personName} Working?"
+Does ${config.personName} have time to game? Will ${config.personName} respond to your messages, or will you be left on read like an abandoned milk carton? Fear not, for I am here to unravel the great mystery of "Is ${config.personName} Processing Dairy?"
 
-🔎 If ${config.personName} is working: Brace yourselves. ${config.personName} has entered the shadow realm of capitalism. Responses will be delayed, spirits may be low, and lunch breaks are the only hope for salvation.
+🔎 If ${config.personName} is working: Brace yourselves. ${config.personName} has entered the creamy realm of dairy production. Responses will be delayed, spirits may be low, and milk breaks are the only hope for salvation.
 
-🎉 If ${config.personName} is NOT working: Rejoice! The shackles have been lifted. The time for memes, gaming, and questionable life choices is upon us.
+🎉 If ${config.personName} is NOT working: Rejoice! The milk tanks have been shut off. The time for memes, gaming, and questionable life choices is upon us.
 
-So before you double-text like a desperate ex, consult ShiftSleuth—because some mysteries are best left unsolved, but this ain't one of them.`;
+So before you double-text like a desperate ex, consult ShiftSleuth—because some mysteries are best left unsolved, but whether Nic is knee-deep in milk ain't one of them.`;
       
       // React with emoji
       message.react('👀')
@@ -423,15 +459,21 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
       message.react(config.getRandomEmoji('summoning'))
         .catch(error => console.error("Failed to react with emoji:", error));
       
-    // Check if it's a work question with a specific date mentioned  
-    } else if (isWorkQuestion() && extractedDate) {
-      // Handle the date-specific work inquiry
-      handleDateSpecificWorkInquiry(message, extractedDate);
-      
-    // Check if it's a general work question about today
+    // Check if it's a work question
     } else if (isWorkQuestion()) {
-      // Handle the general "is Nic working today" inquiry
-      handleTodayWorkInquiry(message);
+      // Use our advanced date extraction module
+      const dateResult = extractDateFromMessage(content);
+      
+      if (dateResult) {
+        // Handle the date-specific work inquiry
+        handleDateSpecificWorkInquiry(message, dateResult.date);
+      } else if (extractedDate) {
+        // Fallback to the old extraction method if our new method fails
+        handleDateSpecificWorkInquiry(message, extractedDate);
+      } else {
+        // If no date was found, treat it as a question about today
+        handleTodayWorkInquiry(message);
+      }
       
     // Handle any remaining messages that might be work-related but don't match our patterns
     } else if (containsPersonName || containsWork) {
