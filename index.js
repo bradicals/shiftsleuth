@@ -292,6 +292,95 @@ For now, just enjoy the last remaining days of Nic's privacy.`;
       // Send roadmap
       message.reply(roadmapMessage);
       
+    // Check for help request
+    } else if (content.includes("help")) {
+      
+      // Help message
+      const helpMessage = `🔍 **ShiftSleuth Help Manual: How to Stalk ${config.personName} Legally**
+
+Need to know if ${config.personName} is trapped in the corporate dungeon or free as a bird? Here's how to use me:
+
+**Basic Commands:**
+
+\`@${config.botName} is ${config.personName} working?\`
+• I'll tell you if ${config.personName} is working TODAY
+
+\`@${config.botName} is ${config.personName} working tomorrow?\`
+• Find out if ${config.personName} will be working TOMORROW
+
+\`@${config.botName} is ${config.personName} working on Friday?\`
+• I understand days of the week!
+
+\`@${config.botName} is ${config.personName} working on 4/20/2025?\`
+• I accept dates in MM/DD/YYYY format
+
+\`@${config.botName} is ${config.personName} working on April 20, 2025?\`
+• Natural language dates work too!
+
+**Other Fun Stuff:**
+
+\`@${config.botName} summon ${config.personName}\`
+• I'll aggressively ping ${config.personName} with a sassy message
+
+\`@${config.botName} introduce yourself\`
+• Learn more about my tragic existence
+
+\`@${config.botName} roadmap\`
+• See the terrifying future features planned
+
+\`@${config.botName} -v\`
+• Check my version and changelog
+
+Remember: I only respond when mentioned. I can't read minds yet (that feature is coming in v2.0).`;
+      
+      // React with emoji
+      message.react('🔍')
+        .catch(error => console.error("Failed to react with emoji:", error));
+      
+      // Send help message
+      message.reply(helpMessage);
+      
+    // Check for version/changelog request  
+    } else if (content.includes("-v") || 
+               content.includes("version") || 
+               content.includes("changelog")) {
+               
+      // Version and changelog message
+      const versionMessage = `📝 **ShiftSleuth v1.2.0**
+
+**Changelog:**
+
+**v1.2.0 (Current)** - *The Future Tense Update*
+• Added proper future tense responses for upcoming dates
+• Fixed bug where the bot would use present tense for future dates
+• Added help command for confused humans
+• Added version/changelog command
+• Fixed holiday message formatting
+• Enhanced date parsing for better natural language understanding
+
+**v1.1.0** - *The Existential Crisis Update*
+• Added roadmap feature
+• Enhanced summoning system for more aggressive ${config.personName} pings
+• Improved holiday detection
+• Added more sassy responses
+• Fixed bug where ${config.personName} had moments of privacy
+
+**v1.0.0** - *Initial Release*
+• Basic schedule tracking functionality
+• Holiday detection
+• Date format parsing
+• Sarcastic responses
+• ${config.personName} surveillance system initialized
+
+*All updates were totally tested and not at all pushed directly to production.*`;
+      
+      // React with emoji
+      message.react('📝')
+        .catch(error => console.error("Failed to react with emoji:", error));
+      
+      // Send version message
+      message.reply(versionMessage);
+    
     // Check for introduction request
     } else if (content.includes("introduce yourself") || 
         content.includes("who are you") || 
