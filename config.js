@@ -1,8 +1,25 @@
-// Configuration for the ScheduleBot
+// Configuration for ShiftSleuth Bot
+
+// Import the holidays module
+const holidays = require('./holidays/us_holidays');
 
 module.exports = {
   // The name of the person whose schedule is being tracked
   personName: 'Nic',
+  
+  // Bot identity
+  botName: 'ShiftSleuth',
+  
+  // Default emojis for various states
+  emojis: {
+    working: ['💼', '👔', '⏰', '📊', '👨‍💻', '😭', '⛓️', '🧑‍💻', '💸', '🧠'],
+    notWorking: ['🎮', '🏖️', '😎', '🎉', '🍕', '🛌', '🍻', '🎭', '🛹', '🏝️'],
+    confused: ['🤔', '❓', '🙄', '😕', '🧐', '🤨', '🥴', '🤯', '🤪', '🧩'],
+    summoning: ['📢', '🚨', '📣', '🔔', '📱', '📲', '📞', '📝', '📤', '📬']
+  },
+  
+  // Nic's known userID for direct mentions
+  nicUserId: 691311987170476123,
   
   // Schedule of working dates (YYYY-MM-DD format)
   workSchedule: [
@@ -214,5 +231,21 @@ module.exports = {
     '2025-12-25',
     '2025-12-29',
     '2025-12-30'
-]
+  ],
+  
+  // Method to check if a date is a holiday
+  isHoliday(dateStr) {
+    return holidays.isHoliday(dateStr);
+  },
+  
+  // Method to check if a person is working on a specific date
+  isWorkingDate(dateStr) {
+    return this.workSchedule.includes(dateStr);
+  },
+  
+  // Get a random emoji from a category
+  getRandomEmoji(category) {
+    const emojis = this.emojis[category];
+    return emojis[Math.floor(Math.random() * emojis.length)];
+  }
 };

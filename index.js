@@ -1,15 +1,19 @@
-// Main entry point for the Discord bot
+// Main entry point for the ShiftSleuth Discord bot
+// The dark humor work schedule tracker for Nic
 require("dotenv").config();
 const { Client, GatewayIntentBits, Events } = require("discord.js");
 const config = require("./config");
+const responses = require("./holidays/responses");
+const dateUtils = require("./holidays/dateUtils");
+const holidays = require("./holidays/us_holidays");
 
-//Http Server Ping
+// Http Server Ping to keep the bot alive
 const express = require("express");
 const app = express();
 
 // Set up a simple route that responds when pinged
 app.get("/", (req, res) => {
-  res.send("Bot is alive!");
+  res.send(`${config.botName} is stalking ${config.personName}'s work schedule...`);
 });
 
 // Start the server
@@ -30,9 +34,162 @@ const client = new Client({
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}`);
   console.log(
-    `Dudernelly is ready! Tracking schedule for ${config.personName}`,
+    `${config.botName} is ready! Tracking schedule for ${config.personName} (with questionable enthusiasm)`,
   );
 });
+
+/**
+ * Process a date-specific work inquiry about Nic
+ * Handles holiday detection, past/future dates, and invalid formats
+ */
+function handleDateSpecificWorkInquiry(message, dateObj) {
+  // If the date couldn't be parsed
+  if (!dateObj) {
+    const response = responses.getRandomResponse(responses.dateResponses.invalidDate);
+    message.react(config.getRandomEmoji('confused'))
+      .catch(error => console.error("Failed to react with emoji:", error));
+    return message.reply(response);
+  }
+  
+  // Format to YYYY-MM-DD for checking against our schedule
+  const dateStr = dateUtils.formatDate(dateObj);
+  
+  // Check if the date is in the past
+  if (dateUtils.isPastDate(dateObj)) {
+    const response = responses.getRandomResponse(responses.dateResponses.askingAboutPast);
+    message.react(config.getRandomEmoji('confused'))
+      .catch(error => console.error("Failed to react with emoji:", error));
+    return message.reply(response);
+  }
+  
+  // Get the year from the date
+  const year = dateObj.getFullYear();
+  
+  // Check if the date is beyond our schedule (e.g., 2026 and later)
+  if (year > 2025) {
+    const response = responses.getRandomResponse(responses.dateResponses.askingAboutFutureBeyondSchedule);
+    message.react(config.getRandomEmoji('confused'))
+      .catch(error => console.error("Failed to react with emoji:", error));
+    return message.reply(response);
+  }
+  
+  // Check if the date is a holiday
+  const holiday = holidays.isHoliday(dateStr);
+  
+  // Check if Nic is working on this date
+  const isWorking = config.isWorkingDate(dateStr);
+  
+  // Format the date for display
+  const formattedDate = dateUtils.formatDateForDisplay(dateObj);
+  
+  // If it's a holiday, give a special response about the holiday
+  if (holiday) {
+    const responseTemplate = isWorking 
+      ? responses.getRandomResponse(responses.holidayWorking)
+      : responses.getRandomResponse(responses.holidayNotWorking);
+    
+    // Replace placeholders with actual values
+    const response = responseTemplate
+      .replace('{holiday}', holiday.name)
+      .replace('{emoji}', holiday.emoji);
+    
+    // React with the holiday emoji
+    message.react(holiday.emoji)
+      .catch(error => console.error("Failed to react with emoji:", error));
+    
+    return message.reply(response);
+  }
+  
+  // Regular work day response
+  const emoji = isWorking 
+    ? config.getRandomEmoji('working') 
+    : config.getRandomEmoji('notWorking');
+  
+  const response = isWorking
+    ? responses.getRandomResponse(responses.workingResponses)
+    : responses.getRandomResponse(responses.notWorkingResponses);
+  
+  // Add a prefix with the date
+  const datePrefix = `On ${formattedDate}: `;
+  
+  // React with emoji
+  message.react(emoji)
+    .catch(error => console.error("Failed to react with emoji:", error));
+  
+  // Reply with the response
+  message.reply(datePrefix + response);
+}
+
+/**
+ * Process a general "is Nic working today" inquiry
+ */
+function handleTodayWorkInquiry(message) {
+  // Get the current date in YYYY-MM-DD format
+  const today = new Date();
+  const todayStr = dateUtils.formatDate(today);
+
+  // Check if the person is working today
+  const isWorking = config.isWorkingDate(todayStr);
+  
+  // Check if today is a holiday
+  const holiday = holidays.isHoliday(todayStr);
+  
+  // If it's a holiday, give a special response about the holiday
+  if (holiday) {
+    const responseTemplate = isWorking 
+      ? responses.getRandomResponse(responses.holidayWorking)
+      : responses.getRandomResponse(responses.holidayNotWorking);
+    
+    // Replace placeholders with actual values
+    const response = responseTemplate
+      .replace('{holiday}', holiday.name)
+      .replace('{emoji}', holiday.emoji);
+    
+    // React with the holiday emoji
+    message.react(holiday.emoji)
+      .catch(error => console.error("Failed to react with emoji:", error));
+    
+    return message.reply(response);
+  }
+  
+  // Regular work day response
+  const emoji = isWorking 
+    ? config.getRandomEmoji('working') 
+    : config.getRandomEmoji('notWorking');
+  
+  const response = isWorking
+    ? responses.getRandomResponse(responses.workingResponses)
+    : responses.getRandomResponse(responses.notWorkingResponses);
+  
+  // React with emoji
+  message.react(emoji)
+    .catch(error => console.error("Failed to react with emoji:", error));
+  
+  // Reply with random response
+  message.reply(response);
+}
+
+/**
+ * Generate a sassy summons for Nic
+ */
+function generateSummons() {
+  const summoningPhrases = [
+    `Dude...duUUuuder...dUUDERNELLY <@${config.nicUserId}>`,
+    `ATTENTION HUMAN KNOWN AS <@${config.nicUserId}>! Your presence is required. Don't make me call your mother.`,
+    `<@${config.nicUserId}> I SUMMON THEE FROM THE VOID! Or your gaming chair. Probably the gaming chair.`,
+    `Yo <@${config.nicUserId}>, people are attempting human interaction with you. I know, terrifying.`,
+    `<@${config.nicUserId}> Someone needs you! Quick, pretend you're busy doing important things.`,
+    `BREAKING NEWS: <@${config.nicUserId}> is being summoned and has approximately 0.2 seconds to respond before we assume the worst.`,
+    `Alert: A wild <@${config.nicUserId}> needs to be captured. *throws Pokéball aggressively*`,
+    `*taps microphone* Is this thing on? <@${config.nicUserId}>, if you can hear this, please step away from whatever game you're playing.`,
+    `<@${config.nicUserId}> has been requested. Error 404: Motivation not found.`,
+    `The council has summoned <@${config.nicUserId}>. Resistance is futile (but expected).`
+  ];
+  
+  // Get a random summons
+  const randomIndex = Math.floor(Math.random() * summoningPhrases.length);
+  return summoningPhrases[randomIndex];
+}
 
 // Listen for messages
 client.on(Events.MessageCreate, (message) => {
@@ -58,6 +215,12 @@ client.on(Events.MessageCreate, (message) => {
         return true;
       }
       
+      // Check for tomorrow work queries
+      if ((content.includes("tomorrow") && containsPersonName) ||
+          (content.includes("tomorrow") && containsWork)) {
+        return true;
+      }
+      
       // If it has both person's name and work, or just person's name with a question mark
       if ((containsPersonName && containsWork) || 
           (containsPersonName && containsQuestionMark)) {
@@ -66,7 +229,20 @@ client.on(Events.MessageCreate, (message) => {
       
       return false;
     };
-
+    
+    // Check for specific "tomorrow" requests
+    const containsTomorrow = content.includes("tomorrow");
+    
+    // Try to extract a date from the message
+    let extractedDate = dateUtils.extractDateFromString(content);
+    
+    // If "tomorrow" is mentioned but no date was extracted, set extractedDate to tomorrow
+    if (containsTomorrow && !extractedDate) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      extractedDate = tomorrow;
+    }
+    
     // Check for roadmap/upcoming features request
     if (content.includes("roadmap") || 
         content.includes("upcoming features") || 
@@ -134,7 +310,7 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
       // Send introduction
       message.reply(introMessage);
       
-    // Check for ping/page request
+    // Check for ping/page request  
     } else if ((content.includes("ping") || 
                 content.includes("page") || 
                 content.includes("summon") || 
@@ -142,71 +318,36 @@ So before you double-text like a desperate ex, consult ShiftSleuth—because som
                 content.includes("get")) && 
                content.includes(config.personName.toLowerCase())) {
       
-      // Direct ping using the known username
-      const nicUserId = 691311987170476123;
+      // Generate a summons message
+      const summons = generateSummons();
       
-      // Ping with custom message
-      message.channel.send(`Dude...duUUuuder...dUUDERNELLY <@${nicUserId}>`);
-      message.react('📢')
+      // Send the summons
+      message.channel.send(summons);
+      
+      // React with a summoning emoji
+      message.react(config.getRandomEmoji('summoning'))
         .catch(error => console.error("Failed to react with emoji:", error));
       
+    // Check if it's a work question with a specific date mentioned  
+    } else if (isWorkQuestion() && extractedDate) {
+      // Handle the date-specific work inquiry
+      handleDateSpecificWorkInquiry(message, extractedDate);
+      
+    // Check if it's a general work question about today
     } else if (isWorkQuestion()) {
-      // Get the current date in YYYY-MM-DD format
-      const today = new Date().toISOString().split("T")[0];
-
-      // Check if the person is working today
-      const isWorking = config.workSchedule.includes(today);
-
-      // Arrays of possible emojis
-      const workingEmojis = ['💼', '👔', '⏰', '📊', '👨‍💻'];
-      const notWorkingEmojis = ['🎮', '🏖️', '😎', '🎉', '🍕'];
+      // Handle the general "is Nic working today" inquiry
+      handleTodayWorkInquiry(message);
       
-      // Arrays of possible responses
-      const workingResponses = [
-        `Yep, ${config.personName} is definitely working today! 💼`,
-        `According to my detective skills, ${config.personName} is at work today. 🕵️`,
-        `My calendar says ${config.personName} is earning that paycheck today! 💰`,
-        `${config.personName} is definitely on the clock today.`,
-        `Work day alert! ${config.personName} is busy with work stuff today.`
-      ];
-      
-      const notWorkingResponses = [
-        `Nope! ${config.personName} is free today! 🎉`,
-        `My investigation shows ${config.personName} is OFF today! 🏖️`,
-        `${config.personName} is not working today. Time to plan something fun!`,
-        `According to my records, ${config.personName} has the day off! 🎮`,
-        `Good news! ${config.personName} isn't working today. Bad news! They have no excuse to ignore your messages.`
-      ];
-
-      // Select random emoji and response
-      const emojis = isWorking ? workingEmojis : notWorkingEmojis;
-      const responses = isWorking ? workingResponses : notWorkingResponses;
-      
-      const randomEmojiIndex = Math.floor(Math.random() * emojis.length);
-      const randomResponseIndex = Math.floor(Math.random() * responses.length);
-      
-      // Add reaction with emoji
-      message.react(emojis[randomEmojiIndex])
-        .catch(error => console.error("Failed to react with emoji:", error));
-      
-      // Reply with random response
-      message.reply(responses[randomResponseIndex]);
+    // Handle any remaining messages that might be work-related but don't match our patterns
     } else if (containsPersonName || containsWork) {
-      // Handle any remaining messages that might be work-related but don't match our patterns
-      const errorResponses = [
-        `I can tell you if ${config.personName} is working today. Just ask me directly!`,
-        `Hmm, not sure what you're asking. Try mentioning me and asking about ${config.personName}'s work schedule.`,
-        `I'm the oracle of ${config.personName}'s work schedule! Ask me if they're working today.`,
-        `Try asking me "is ${config.personName} working today?" - that's what I understand best!`,
-        `Not sure I understand. Want to know if ${config.personName} is working? Just ask!`
-      ];
+      const confusedResponse = responses.getRandomResponse(responses.confusedResponses);
       
-      const randomIndex = Math.floor(Math.random() * errorResponses.length);
-      const randomEmoji = ['🤔', '❓', '🙄', '😕', '🧐'][Math.floor(Math.random() * 5)];
-      
-      message.react(randomEmoji)
+      // React with a confused emoji
+      message.react(config.getRandomEmoji('confused'))
         .catch(error => console.error("Failed to react with emoji:", error));
-      message.reply(errorResponses[randomIndex]);
+      
+      // Reply with the confused response
+      message.reply(confusedResponse);
     }
   }
 });
