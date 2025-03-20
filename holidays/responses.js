@@ -42,6 +42,20 @@ module.exports = {
     `Milk plant mode will be activated! Nic will be toggling between looking productive and checking how much PTO he has left.`
   ],
   
+  // Specialized responses for "when does Nic work next" questions
+  nextWorkDayResponses: [
+    `Nic's next dairy imprisonment begins on this date. Get your milk puns ready! 🥛`,
+    `Mark your calendars! Nic's next shift at the milk plant is scheduled for this exact date. The cows are already preparing their complaints. 🐄`,
+    `Nic works next on this date - his soul will be temporarily exchanged for a paycheck and unlimited access to dairy products. 🧀`,
+    `The next time Nic will be trapped in milk plant purgatory is this date. Send dairy-free snacks as survival supplies. 🥛`,
+    `ATTENTION: Nic's next scheduled appearance in the land of pasteurization is on this date. Please plan your dairy jokes accordingly. 🐄`,
+    `Nic's next dance with dairy destiny is scheduled for this date. The milk tanks are eagerly awaiting his return. 🧀`,
+    `The milk plant has summoned Nic for his next shift on this date. Resistance is futile. 🥛`,
+    `Nic will once again don his dairy armor for battle on this date - his next epic encounter with lactose awaits. 🐄`,
+    `The next time Nic will stare blankly at milk vats questioning his life choices is officially scheduled for this date. 🧀`,
+    `Alert the dairy authorities! Nic's next milk plant appearance has been confirmed for this date. The pasteurization must go on! 🥛`
+  ],
+  
   // Future tense responses for when Nic will NOT be working
   futureNotWorkingResponses: [
     `FREEDOM! Nic will NOT be milking cows that day. Expect rapid responses unless he's busy pretending he has a life. 🎉`,
@@ -129,6 +143,20 @@ module.exports = {
     `Your question has left me more confused than Nic when someone mentions "responsibility."`,
     `That made less sense than Nic's explanation of why he needs another gaming console.`,
     `I'm just a simple bot. Unlike Nic, I can admit when I don't understand something.`
+  ],
+  
+  // Responses for vague date references that need clarification
+  clarificationResponses: [
+    `I need a specific date to check Nic's milk plant servitude. When exactly is {reference}? 🗓️`,
+    `I'd love to stalk Nic's shift schedule, but I need to know when {reference} falls on the calendar. What's the date? 🗓️`,
+    `My dairy-tracking powers need more information. When is {reference} exactly? I need a date to check if Nic will be trapped in the milk plant. 🗓️`,
+    `Even my advanced milk monitoring systems can't determine when {reference} is. Can you provide a date so I can check Nic's schedule? 🗓️`,
+    `I've stalked Nic's schedule extensively, but {reference} isn't in my database. What date is that? 🗓️`,
+    `Error: Cannot compute Nic's dairy obligations for {reference} without temporal coordinates. Please provide a date format my limited circuits can process. 🗓️`,
+    `Nic's milk plant overlords require specific dates in their system. When exactly is {reference}? 🗓️`,
+    `I need to consult the sacred milk schedule, but I can't find {reference} without a specific date. When is it? 🗓️`,
+    `My lactose-based surveillance system needs more specific temporal data. When is {reference}? 🗓️`,
+    `I'd check if Nic is working on {reference}, but my dairy database needs an actual date. When is it? 🗓️`
   ],
   
   // Helper function to get random response

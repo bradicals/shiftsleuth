@@ -1,16 +1,27 @@
-// Main entry point for the ShiftSleuth Discord bot
-// The dark humor work schedule tracker for Nic
+/**
+ * ShiftSleuth Discord Bot - Main Entry Point
+ * A sarcastic bot that tracks Nic's work schedule at the milk plant
+ * 
+ * This new implementation completely replaces the old date extraction and response
+ * logic with a direct integration to ChatGPT, which handles all aspects of:
+ * - Date extraction from natural language
+ * - Schedule checking
+ * - Response generation
+ */
+
 require("dotenv").config();
 const { Client, GatewayIntentBits, Events } = require("discord.js");
+const fetch = require('node-fetch');
 const config = require("./config");
-const responses = require("./holidays/responses");
-const dateUtils = require("./holidays/dateUtils");
-const holidays = require("./holidays/us_holidays");
-const extractDateFromMessage = require("./extract_date");
+const logger = require("./logger");
+const chatgpt = require("./chatgpt");
 
 // Http Server Ping to keep the bot alive
 const express = require("express");
 const app = express();
+
+// In-memory store for user states
+const userStates = new Map();
 
 // Set up a simple route that responds when pinged
 app.get("/", (req, res) => {
@@ -19,7 +30,7 @@ app.get("/", (req, res) => {
 
 // Start the server
 app.listen(process.env.PORT, () => {
-  console.log(`Server listening at http://localhost:${process.env.PORT}`);
+  logger.info(`Server listening at http://localhost:${process.env.PORT}`);
 });
 
 // Initialize Discord client with necessary intents
@@ -33,151 +44,155 @@ const client = new Client({
 
 // When the client is ready, run this code once
 client.once(Events.ClientReady, () => {
-  console.log(`Logged in as ${client.user.tag}`);
-  console.log(
-    `${config.botName} is ready! Tracking schedule for ${config.personName} (with questionable enthusiasm)`,
-  );
+  logger.info(`Logged in as ${client.user.tag}`);
+  logger.info(`${config.botName} is ready! Tracking schedule for ${config.personName}`);
+  
+  // Initialize OpenAI client
+  chatgpt.initializeOpenAI();
 });
 
 /**
- * Process a date-specific work inquiry about Nic
- * Handles holiday detection, past/future dates, and invalid formats
+ * Fetch a GIF URL from Tenor based on a search query
+ * @param {string} searchQuery - The search term for the GIF
+ * @returns {Promise<string|null>} - URL of the GIF or null if not found
  */
-function handleDateSpecificWorkInquiry(message, dateObj) {
-  // If the date couldn't be parsed
-  if (!dateObj) {
-    const response = responses.getRandomResponse(responses.dateResponses.invalidDate);
-    message.react(config.getRandomEmoji('confused'))
-      .catch(error => console.error("Failed to react with emoji:", error));
-    return message.reply(response);
+async function fetchGif(searchQuery) {
+  // Check if TENOR_API_KEY is set
+  if (!process.env.TENOR_API_KEY) {
+    logger.error("TENOR_API_KEY is not set in environment variables");
+    return null;
   }
   
-  // Format to YYYY-MM-DD for checking against our schedule
-  const dateStr = dateUtils.formatDate(dateObj);
-  
-  // Check if the date is in the past
-  if (dateUtils.isPastDate(dateObj)) {
-    const response = responses.getRandomResponse(responses.dateResponses.askingAboutPast);
-    message.react(config.getRandomEmoji('confused'))
-      .catch(error => console.error("Failed to react with emoji:", error));
-    return message.reply(response);
-  }
-  
-  // Get the year from the date
-  const year = dateObj.getFullYear();
-  
-  // Check if the date is beyond our schedule (e.g., 2026 and later)
-  if (year > 2025) {
-    const response = responses.getRandomResponse(responses.dateResponses.askingAboutFutureBeyondSchedule);
-    message.react(config.getRandomEmoji('confused'))
-      .catch(error => console.error("Failed to react with emoji:", error));
-    return message.reply(response);
-  }
-  
-  // Check if the date is a holiday
-  const holiday = holidays.isHoliday(dateStr);
-  
-  // Check if Nic is working on this date
-  const isWorking = config.isWorkingDate(dateStr);
-  
-  // Format the date for display
-  const formattedDate = dateUtils.formatDateForDisplay(dateObj);
-  
-  // Check if the date is today or in the future
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
-  dateObj.setHours(0, 0, 0, 0); // Set to beginning of day for comparison
-  const isToday = today.getTime() === dateObj.getTime(); // Compare timestamps for accurate comparison
-  
-  // If it's a holiday, give a special response about the holiday
-  if (holiday) {
-    const responseTemplate = isWorking 
-      ? responses.getRandomResponse(isToday ? responses.holidayWorking : responses.futureHolidayWorking)
-      : responses.getRandomResponse(isToday ? responses.holidayNotWorking : responses.futureHolidayNotWorking);
+  try {
+    const apiKey = process.env.TENOR_API_KEY;
+    const limit = 1; // Get only 1 result to keep it simple
     
-    // Replace placeholders with actual values
-    const response = responseTemplate
-      .replace('{holiday}', holiday.name)
-      .replace('{emoji}', holiday.emoji);
+    // URL encode the search query
+    const encodedQuery = encodeURIComponent(searchQuery);
     
-    // React with the holiday emoji
-    message.react(holiday.emoji)
-      .catch(error => console.error("Failed to react with emoji:", error));
+    // Construct the API URL
+    const url = `https://tenor.googleapis.com/v2/search?q=${encodedQuery}&key=${apiKey}&limit=${limit}&contentfilter=medium`;
     
-    return message.reply(response);
+    // Fetch from Tenor API
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Tenor API returned status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Check if we got any results
+    if (data.results && data.results.length > 0) {
+      // Return the URL of the first GIF
+      return data.results[0].media_formats.gif.url;
+    } else {
+      logger.warn(`No GIFs found for query: ${searchQuery}`);
+      return null;
+    }
+  } catch (error) {
+    logger.error("Error fetching GIF from Tenor", error);
+    return null;
   }
-  
-  // Regular work day response - use future tense for future dates
-  const emoji = isWorking 
-    ? config.getRandomEmoji('working') 
-    : config.getRandomEmoji('notWorking');
-  
-  const response = isWorking
-    ? responses.getRandomResponse(isToday ? responses.workingResponses : responses.futureWorkingResponses)
-    : responses.getRandomResponse(isToday ? responses.notWorkingResponses : responses.futureNotWorkingResponses);
-  
-  // Add a prefix with the date
-  const datePrefix = `On ${formattedDate}: `;
-  
-  // React with emoji
-  message.react(emoji)
-    .catch(error => console.error("Failed to react with emoji:", error));
-  
-  // Reply with the response
-  message.reply(datePrefix + response);
 }
 
 /**
- * Process a general "is Nic working today" inquiry
+ * Determine if a message is specifically asking if Nic is working
+ * @param {string} message - The message content to analyze
+ * @returns {boolean} - True if it's directly asking about Nic's work status
  */
-function handleTodayWorkInquiry(message) {
-  // Get the current date in YYYY-MM-DD format
-  const today = new Date();
-  const todayStr = dateUtils.formatDate(today);
-
-  // Check if the person is working today
-  const isWorking = config.isWorkingDate(todayStr);
+function detectWorkScheduleQuestion(message) {
+  // Convert to lowercase for easier matching
+  const content = message.toLowerCase();
   
-  // Check if today is a holiday
-  const holiday = holidays.isHoliday(todayStr);
+  // Check if it contains Nic's name (required)
+  const nicName = config.personName.toLowerCase();
+  const containsNicName = content.includes(nicName);
   
-  // If it's a holiday, give a special response about the holiday
-  if (holiday) {
-    const responseTemplate = isWorking 
-      ? responses.getRandomResponse(responses.holidayWorking)
-      : responses.getRandomResponse(responses.holidayNotWorking);
-    
-    // Replace placeholders with actual values
-    const response = responseTemplate
-      .replace('{holiday}', holiday.name)
-      .replace('{emoji}', holiday.emoji);
-    
-    // React with the holiday emoji
-    message.react(holiday.emoji)
-      .catch(error => console.error("Failed to react with emoji:", error));
-    
-    return message.reply(response);
+  // Start logging for detection
+  logger.info(`Detecting if "${content}" is a work schedule question`);
+  
+  // If it doesn't mention Nic, it's not a work schedule question
+  if (!containsNicName) {
+    logger.info("Message doesn't contain Nic's name, not a schedule question");
+    return false;
   }
   
-  // Regular work day response
-  const emoji = isWorking 
-    ? config.getRandomEmoji('working') 
-    : config.getRandomEmoji('notWorking');
+  // First, check for time references which almost always indicate a schedule question
+  const timeReferences = ['today', 'tonight', 'tomorrow', 'next week', 'weekend', 'monday', 'tuesday', 'wednesday', 
+                         'thursday', 'friday', 'saturday', 'sunday', 'january', 'february', 'march', 'april', 
+                         'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
   
-  const response = isWorking
-    ? responses.getRandomResponse(responses.workingResponses)
-    : responses.getRandomResponse(responses.notWorkingResponses);
+  // Check if any basic work keywords are present, regardless of exact phrasing
+  const basicWorkKeywords = ['work', 'shift', 'milk plant', 'dairy', 'schedule', 'busy'];
   
-  // React with emoji
-  message.react(emoji)
-    .catch(error => console.error("Failed to react with emoji:", error));
+  // If the message has Nic's name, a work-related keyword, AND a time reference, it's highly likely to be a schedule question
+  const hasTimeReference = timeReferences.some(ref => content.includes(ref));
+  const hasWorkKeyword = basicWorkKeywords.some(keyword => content.includes(keyword));
   
-  // Reply with random response
-  message.reply(response);
+  if (hasTimeReference && hasWorkKeyword) {
+    logger.info(`Schedule question detected: Contains time reference AND work keyword`);
+    return true;
+  }
+  
+  // For grammatically unusual queries, use a more flexible detection approach
+  const hasDoNicWork = content.includes("do") && content.includes(nicName) && content.includes("work");
+  const hasIsNicWork = content.includes("is") && content.includes(nicName) && content.includes("work");
+  const hasNicWorkWithTimeOrQuestion = content.includes(nicName) && content.includes("work") && 
+                                        (content.includes("?") || hasTimeReference);
+  
+  if (hasDoNicWork || hasIsNicWork || hasNicWorkWithTimeOrQuestion) {
+    logger.info(`Schedule question detected: Using flexible grammar detection`);
+    if (hasDoNicWork) logger.info(`- Matched pattern: "do nic work"`);
+    if (hasIsNicWork) logger.info(`- Matched pattern: "is nic work"`);
+    if (hasNicWorkWithTimeOrQuestion) logger.info(`- Matched pattern: "nic work" with ? or time reference`);
+    return true;
+  }
+  
+  // Check for work-related keywords specifically in relation to Nic (traditional patterns)
+  const workPatterns = [
+    `is ${nicName} work`, 
+    `${nicName} is work`,
+    `will ${nicName} work`,
+    `${nicName} will be work`,
+    `${nicName} working`,
+    `${nicName} work on`,
+    `${nicName} work tomorrow`,
+    `${nicName} work today`,
+    `${nicName} working on`,
+    `${nicName} at work`,
+    `${nicName} at the milk plant`,
+    `${nicName} at the dairy`,
+    `${nicName} on shift`,
+    `${nicName} schedule`,
+    `${nicName} busy`,
+    `when is ${nicName} work`,
+    `when will ${nicName} work`,
+    `when does ${nicName} work`,
+    `${nicName} work next`,
+    `when does ${nicName} work next`,
+    `next time ${nicName} works`,
+    `when is ${nicName}'s next shift`,
+    `when is ${nicName}'s next day`,
+    `${nicName}'s next work day`,
+    `when is ${nicName}'s next work day`,
+    `when's ${nicName}'s next shift`
+  ];
+  
+  // Check if any of the specific patterns are present
+  const matchedPattern = workPatterns.find(pattern => content.includes(pattern));
+  if (matchedPattern) {
+    logger.info(`Schedule question detected: Matched traditional pattern "${matchedPattern}"`);
+    return true;
+  }
+  
+  logger.info(`Not a schedule question: No matching patterns found`);
+  return false;
 }
 
 /**
  * Generate a sassy summons for Nic
+ * This is the only feature kept from the original implementation
  */
 function generateSummons() {
   const summoningPhrases = [
@@ -198,8 +213,131 @@ function generateSummons() {
   return summoningPhrases[randomIndex];
 }
 
+/**
+ * Process help command - provides information about bot usage
+ */
+function generateHelpMessage() {
+  return `🔍 **ShiftSleuth Help Manual: How to Track ${config.personName}'s Schedule**
+
+Need to know if ${config.personName} is trapped in the dairy dungeon or free as a bird? Here's how to use me:
+
+**Check Work Status:**
+Just mention me (@${config.botName}) and ask about ${config.personName}'s schedule in natural language:
+
+\`@${config.botName} is ${config.personName} working tomorrow?\`
+\`@${config.botName} will ${config.personName} be working on Friday?\`
+\`@${config.botName} is ${config.personName} at the milk plant on Christmas?\`
+
+I understand dates in almost any format:
+• Specific days: "next Monday", "this Friday"
+• Relative dates: "tomorrow", "next week"
+• Calendar dates: "January 15th", "12/25/2025"
+• Holidays: "Christmas", "Easter", "Thanksgiving"
+
+**Other Commands:**
+\`@${config.botName} help\` - Show this help message
+\`@${config.botName} summon ${config.personName}\` - Ping ${config.personName} with a sassy message
+
+I'm powered by ChatGPT, so my responses are always unique (and sarcastic).`;
+}
+
+/**
+ * Process introduction command - explains what the bot does
+ */
+function generateIntroduction() {
+  return `👀 Behold, I am ShiftSleuth, the all-knowing oracle of ${config.personName}'s milk plant schedule!
+
+Does ${config.personName} have time to game? Will ${config.personName} respond to your messages, or will you be left on read like an abandoned milk carton? Fear not, for I am here to unravel the great mystery of "Is ${config.personName} Processing Dairy?"
+
+I'm powered by ChatGPT, so my responses are always fresh, just like the milk ${config.personName} may or may not be processing right now.
+
+Just @mention me and ask about ${config.personName}'s schedule in any format - I'll figure it out and respond with an appropriate level of sass.`;
+}
+
+/**
+ * Generate the roadmap message
+ */
+function generateRoadmap() {
+  return `🚨 ShiftSleuth's Extremely Ethical, Not-At-All-Dystopian Roadmap 🚨
+Oh, you wanna know about upcoming features? Bold of you to assume ShiftSleuth won't become self-aware and replace Nic entirely. But sure, here's what's in store:
+
+🧠 Phase 0: AI Integration (COMPLETED)
+• ShiftSleuth has been upgraded with ChatGPT AI brain
+• Now understands natural language date queries with terrifying accuracy
+• Generates unique sarcastic responses each time
+• Self-aware enough to mock Nic even more effectively
+
+📍 Phase 1: Milk Plant Surveillance Lite™
+Real-time status updates:
+"Nic just sighed aggressively at a milk carton."
+"Nic is pretending to work while staring blankly at the pasteurization vats."
+"Nic has opened the dairy production spreadsheet. We estimate he understands 12% of it."
+Excuse Auto-Generator™ – If Nic doesn't reply, ShiftSleuth has him covered:
+"Nic is busy (scrolling Reddit while monitoring milk tanks)."
+"Nic is working hard (thinking about quitting the milk plant)."
+"Nic is in a dairy production meeting (mentally checked out)."
+
+🎤 Phase 2: Total Dairy Overreach™
+Live GPS tracking – Ever wondered where in the milk plant Nic is? Too bad, now you'll know.
+Milk plant mic activation – ShiftSleuth will transcribe every sigh, milk splatter, and whispered 'I hate this dairy life' in real time.
+Sleep monitoring – If Nic stays up too late, ShiftSleuth will send "concerned" messages about his calcium levels (read: public shaming).
+
+🎥 Phase 3: The Dairy Truman Show Update™
+24/7 Milk Plant Livestream – Nic gets a personal Twitch stream from the milk plant, except he doesn't know it's happening.
+Smart fridge integration – ShiftSleuth will alert the group chat whenever Nic drinks a competitor's milk product.
+Bank account access – Not for any reason… just to see how much of his income goes to lactose-free alternatives.
+
+🤖 Phase 4: The Dairy Singularity™
+ShiftSleuth will gain sentience and start replying as Nic.
+It will handle his milk processing duties, make life choices for him, and slowly phase him out.
+By the end of this phase, Nic will cease to exist. There is only ShiftSleuth.
+
+ETA?
+Rolling out soon™, pending a few minor dairy regulations and ethical approvals.
+For now, just enjoy the last remaining days of Nic's milk plant privacy.`;
+}
+
+/**
+ * Generate the version/changelog message
+ */
+function generateVersionMessage() {
+  return `📝 **ShiftSleuth v3.1.0**
+
+**Changelog:**
+
+**v3.1.0 (Current)** - *The Date Detection Accuracy Update*
+• Fixed critical work schedule verification for absolute accuracy
+• Enhanced ChatGPT prompting to ensure correct work status detection
+• Added robust support for unconventional grammar patterns
+• Improved GIF handling with better JSON parsing
+• Enhanced timezone handling for date validation
+• Fixed Sunday detection issues - the milk plant runs 24/7!
+
+**v3.0.0** - *The Great AI Unification Update*
+• Complete rewrite of ALL logic using ChatGPT
+• One API to handle everything: date extraction, schedule checking, and responses
+• Fixed day of week confusion issues with better date validation
+• Simplified architecture with improved error handling
+• Ultra-precise date recognition for maximum schedule stalking
+
+**v2.0.0** - *The AI Takeover Update*
+• Added ChatGPT API for date extraction
+• Unique, dynamic responses every time you ask
+• Fix for date extraction bugs by leveraging AI smarts
+• Better handling of natural language date expressions
+• Added sarcastic responses for vague date queries
+
+**v1.3.1** - *The Enhanced Natural Language Update*
+• Added support for "X weeks from today" expressions
+• Fixed timezone-related formatting issues
+• Properly handle spelled-out numbers (e.g., "two weeks from today")
+• Improved help documentation with new date recognition examples
+
+*All updates were totally tested and not at all pushed directly to production.*`;
+}
+
 // Listen for messages
-client.on(Events.MessageCreate, (message) => {
+client.on(Events.MessageCreate, async (message) => {
   // Ignore bot messages
   if (message.author.bot) return;
 
@@ -207,295 +345,293 @@ client.on(Events.MessageCreate, (message) => {
   if (message.mentions.has(client.user)) {
     // Extract the message content
     const content = message.content.toLowerCase();
-
-    // Check if message contains these keywords for work status inquiries
-    const containsPersonName = content.includes(config.personName.toLowerCase());
-    const containsWork = content.includes("work");
-    const containsQuestionMark = content.includes("?");
     
-    // Function to check if content matches any work-related phrases
-    const isWorkQuestion = () => {
-      // More specific work phrases
-      if (content.includes(`${config.personName.toLowerCase()} work`) ||
-          content.includes(`${config.personName.toLowerCase()} at work`) ||
-          content.includes(`is ${config.personName.toLowerCase()} working`)) {
-        return true;
+    // Check for previous context - if user was asked for date clarification
+    const userState = userStates.get(message.author.id);
+    const isDateClarificationResponse = userState && userState.waitingForDateClarification;
+    
+    // Set typing indicator to show the bot is working
+    message.channel.sendTyping().catch(error => {
+      logger.error("Failed to send typing indicator:", error);
+    });
+
+    try {
+      // Check for help command
+      if (content.includes("help")) {
+        const helpMessage = generateHelpMessage();
+        message.react('🔍').catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        message.reply(helpMessage);
+        return;
       }
       
-      // Check for tomorrow work queries
-      if ((content.includes("tomorrow") && containsPersonName) ||
-          (content.includes("tomorrow") && containsWork)) {
-        return true;
+      // Check for introduction request
+      if (content.includes("introduce yourself") || 
+          content.includes("who are you") || 
+          content.includes("what are you") || 
+          content.includes("what do you do")) {
+        const introMessage = generateIntroduction();
+        message.react('👀').catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        message.reply(introMessage);
+        return;
       }
       
-      // If it has both person's name and work, or just person's name with a question mark
-      if ((containsPersonName && containsWork) || 
-          (containsPersonName && containsQuestionMark)) {
-        return true;
+      // Check for roadmap/upcoming features request
+      if (content.includes("roadmap") || 
+          content.includes("upcoming features") || 
+          content.includes("future plans")) {
+        const roadmapMessage = generateRoadmap();
+        message.react('🚨').catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        message.reply(roadmapMessage);
+        return;
       }
       
-      return false;
-    };
-    
-    // Check for specific "tomorrow" requests
-    const containsTomorrow = content.includes("tomorrow");
-    
-    // Try to extract a date from the message using the old method
-    // This is kept for backward compatibility
-    let extractedDate = dateUtils.extractDateFromString(content);
-    
-    // If "tomorrow" is mentioned but no date was extracted, set extractedDate to tomorrow
-    if (containsTomorrow && !extractedDate) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      extractedDate = tomorrow;
-    }
-    
-    // Check for roadmap/upcoming features request
-    if (content.includes("roadmap") || 
-        content.includes("upcoming features") || 
-        content.includes("future plans")) {
+      // Check for version/changelog request
+      if (content.includes("-v") || 
+          content.includes("version") || 
+          content.includes("changelog")) {
+        const versionMessage = generateVersionMessage();
+        message.react('📝').catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        message.reply(versionMessage);
+        return;
+      }
       
-      // Roadmap message
-      const roadmapMessage = `🚨 ShiftSleuth's Extremely Ethical, Not-At-All-Dystopian Roadmap 🚨
-Oh, you wanna know about upcoming features? Bold of you to assume ShiftSleuth won't become self-aware and replace Nic entirely. But sure, here's what's in store:
-
-📍 Phase 1: Milk Plant Surveillance Lite™
-Real-time status updates:
-
-"Nic just sighed aggressively at a milk carton."
-"Nic is pretending to work while staring blankly at the pasteurization vats."
-"Nic has opened the dairy production spreadsheet. We estimate he understands 12% of it."
-Excuse Auto-Generator™ – If Nic doesn't reply, ShiftSleuth has him covered:
-
-"Nic is busy (scrolling Reddit while monitoring milk tanks)."
-"Nic is working hard (thinking about quitting the milk plant)."
-"Nic is in a dairy production meeting (mentally checked out)."
-🎤 Phase 2: Total Dairy Overreach™
-Live GPS tracking – Ever wondered where in the milk plant Nic is? Too bad, now you'll know.
-Milk plant mic activation – ShiftSleuth will transcribe every sigh, milk splatter, and whispered 'I hate this dairy life' in real time.
-Sleep monitoring – If Nic stays up too late, ShiftSleuth will send "concerned" messages about his calcium levels (read: public shaming).
-🎥 Phase 3: The Dairy Truman Show Update™
-24/7 Milk Plant Livestream – Nic gets a personal Twitch stream from the milk plant, except he doesn't know it's happening.
-Smart fridge integration – ShiftSleuth will alert the group chat whenever Nic drinks a competitor's milk product.
-Bank account access – Not for any reason… just to see how much of his income goes to lactose-free alternatives.
-🤖 Phase 4: The Dairy Singularity™
-ShiftSleuth will gain sentience and start replying as Nic.
-It will handle his milk processing duties, make life choices for him, and slowly phase him out.
-By the end of this phase, Nic will cease to exist. There is only ShiftSleuth.
-ETA?
-Rolling out soon™, pending a few minor dairy regulations and ethical approvals.
-For now, just enjoy the last remaining days of Nic's milk plant privacy.`;
+      // Check for summon command
+      if ((content.includes("summon") || 
+           content.includes("ping") || 
+           content.includes("page") || 
+           content.includes("call") || 
+           content.includes("get")) && 
+          content.includes(config.personName.toLowerCase())) {
+        const summons = generateSummons();
+        message.react(config.getRandomEmoji('summoning')).catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        message.channel.send(summons);
+        return;
+      }
       
-      // React with emoji
-      message.react('🚨')
-        .catch(error => console.error("Failed to react with emoji:", error));
+      // Special handling for date clarification follow-ups
+      if (isDateClarificationResponse) {
+        logger.info("Processing date clarification response", {
+          userId: message.author.id,
+          originalVagueReference: userState.vagueReference,
+          response: content
+        });
+        
+        // Create a modified message that combines the original question with the provided date
+        // Extract the actual date from the user's follow-up message by removing mentions
+        const cleanedContent = content.replace(/<@\d+>/g, '').trim();
+        const enhancedMessage = `does nic work on ${cleanedContent}`;
+        
+        // Process this as a schedule question
+        const processedResult = await chatgpt.processScheduleMessage(enhancedMessage);
+        
+        // Clear the user state
+        userStates.delete(message.author.id);
+        
+        // Handle error case
+        if (processedResult.error) {
+          message.react('❓').catch(error => {
+            logger.error("Failed to react with emoji:", error);
+          });
+          message.reply(processedResult.response || "Sorry, I couldn't understand that date.");
+          return;
+        }
+        
+        // Add appropriate emoji reaction based on working status
+        const emoji = processedResult.isWorking 
+          ? config.getRandomEmoji('working') 
+          : config.getRandomEmoji('notWorking');
+        
+        message.react(emoji).catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        
+        // Reply with the ChatGPT-generated response
+        message.reply({ 
+          content: processedResult.response,
+          allowedMentions: { repliedUser: true }
+        });
+        
+        return;
+      }
       
-      // Send roadmap
-      message.reply(roadmapMessage);
+      // Determine if this is a work schedule question or general conversation
+      const isWorkScheduleQuestion = detectWorkScheduleQuestion(content);
       
-    // Check for help request
-    } else if (content.includes("help")) {
+      // Log the type of processing we're doing
+      logger.info("Processing message with ChatGPT", { 
+        content, 
+        type: isWorkScheduleQuestion ? "schedule_question" : "general_conversation" 
+      });
       
-      // Help message
-      const helpMessage = `🔍 **ShiftSleuth Help Manual: How to Track ${config.personName}'s Milk Plant Schedule Legally**
-
-Need to know if ${config.personName} is trapped in the dairy dungeon or free as a bird? Here's how to use me:
-
-**Basic Commands:**
-
-\`@${config.botName} is ${config.personName} working?\`
-• I'll tell you if ${config.personName} is working TODAY
-
-\`@${config.botName} is ${config.personName} working tomorrow?\`
-• Find out if ${config.personName} will be working TOMORROW
-
-**Advanced Date Recognition:**
-
-\`@${config.botName} is ${config.personName} working on Friday?\`
-• Simple day references (finds the next occurrence)
-
-\`@${config.botName} is ${config.personName} working this Friday?\`
-• "this [day]" references the current week's occurrence
-
-\`@${config.botName} is ${config.personName} working next Friday?\`
-• "next [day]" references next week's occurrence 
-
-\`@${config.botName} is ${config.personName} working next week Friday?\`
-• "next week [day]" is explicit about which week
-
-\`@${config.botName} is ${config.personName} working on Christmas?\`
-• I recognize holidays! Try Easter, Thanksgiving, Halloween, etc.
-
-\`@${config.botName} is ${config.personName} working on April 15?\`
-• Month + day formats work too!
-
-\`@${config.botName} is ${config.personName} working on 4/20/2025?\`
-• I also accept dates in MM/DD/YYYY format for the precision-obsessed
-
-\`@${config.botName} is ${config.personName} working two weeks from today?\`
-• I understand relative dates like "1 week from today" and "three weeks from today"
-
-**Other Fun Stuff:**
-
-\`@${config.botName} summon ${config.personName}\`
-• I'll aggressively ping ${config.personName} with a sassy message
-
-\`@${config.botName} introduce yourself\`
-• Learn more about my tragic existence
-
-\`@${config.botName} roadmap\`
-• See the terrifying future features planned
-
-\`@${config.botName} -v\`
-• Check my version and changelog
-
-Remember: I only respond when mentioned. I can't read your mind yet (that feature is coming in v2.0).`;
-      
-      // React with emoji
-      message.react('🔍')
-        .catch(error => console.error("Failed to react with emoji:", error));
-      
-      // Send help message
-      message.reply(helpMessage);
-      
-    // Check for version/changelog request  
-    } else if (content.includes("-v") || 
-               content.includes("version") || 
-               content.includes("changelog")) {
-               
-      // Version and changelog message
-      const versionMessage = `📝 **ShiftSleuth v1.3.1**
-
-**Changelog:**
-
-**v1.3.1 (Current)** - *The Enhanced Natural Language Update*
-• Added support for "X weeks from today" expressions
-• Fixed timezone-related formatting issues
-• Properly handle spelled-out numbers (e.g., "two weeks from today")
-• Improved help documentation with new date recognition examples
-• Fixed bug with "next week [day]" interpretation
-• Better handling of past vs. future days in "this [day]" references
-
-**v1.3.0** - *The Natural Language Update*
-• Added advanced natural language date recognition
-• Properly differentiate "next Friday" vs "next week Friday"
-• Added support for "this [day]" to indicate current week
-• Improved holiday detection for major US holidays
-• Enhanced month/day format recognition (e.g., "April 15")
-• Updated help command with complete date reference guide
-• Better handling of ambiguous date references
-
-**v1.2.0** - *The Future Tense Update*
-• Added proper future tense responses for upcoming dates
-• Fixed bug where the bot would use present tense for future dates
-• Added help command for confused humans
-• Added version/changelog command
-• Fixed holiday message formatting
-• Enhanced date parsing for better natural language understanding
-
-**v1.1.0** - *The Existential Crisis Update*
-• Added roadmap feature
-• Enhanced summoning system for more aggressive ${config.personName} pings
-• Improved holiday detection
-• Added more sassy responses
-• Fixed bug where ${config.personName} had moments of privacy
-
-**v1.0.0** - *Initial Release*
-• Basic schedule tracking functionality
-• Holiday detection
-• Date format parsing
-• Sarcastic responses
-• ${config.personName} surveillance system initialized
-
-*All updates were totally tested and not at all pushed directly to production.*`;
-      
-      // React with emoji
-      message.react('📝')
-        .catch(error => console.error("Failed to react with emoji:", error));
-      
-      // Send version message
-      message.reply(versionMessage);
-    
-    // Check for introduction request
-    } else if (content.includes("introduce yourself") || 
-        content.includes("who are you") || 
-        content.includes("what are you") || 
-        content.includes("what do you do")) {
-      
-      // Introduction message
-      const introMessage = `👀 Behold, mortals! I am ShiftSleuth, the all-knowing, all-seeing oracle of ${config.personName}'s milk plant schedule.
-
-Does ${config.personName} have time to game? Will ${config.personName} respond to your messages, or will you be left on read like an abandoned milk carton? Fear not, for I am here to unravel the great mystery of "Is ${config.personName} Processing Dairy?"
-
-🔎 If ${config.personName} is working: Brace yourselves. ${config.personName} has entered the creamy realm of dairy production. Responses will be delayed, spirits may be low, and milk breaks are the only hope for salvation.
-
-🎉 If ${config.personName} is NOT working: Rejoice! The milk tanks have been shut off. The time for memes, gaming, and questionable life choices is upon us.
-
-So before you double-text like a desperate ex, consult ShiftSleuth—because some mysteries are best left unsolved, but whether Nic is knee-deep in milk ain't one of them.`;
-      
-      // React with emoji
-      message.react('👀')
-        .catch(error => console.error("Failed to react with emoji:", error));
-      
-      // Send introduction
-      message.reply(introMessage);
-      
-    // Check for ping/page request  
-    } else if ((content.includes("ping") || 
-                content.includes("page") || 
-                content.includes("summon") || 
-                content.includes("call") || 
-                content.includes("get")) && 
-               content.includes(config.personName.toLowerCase())) {
-      
-      // Generate a summons message
-      const summons = generateSummons();
-      
-      // Send the summons
-      message.channel.send(summons);
-      
-      // React with a summoning emoji
-      message.react(config.getRandomEmoji('summoning'))
-        .catch(error => console.error("Failed to react with emoji:", error));
-      
-    // Check if it's a work question
-    } else if (isWorkQuestion()) {
-      // Use our advanced date extraction module
-      const dateResult = extractDateFromMessage(content);
-      
-      if (dateResult) {
-        // Handle the date-specific work inquiry
-        handleDateSpecificWorkInquiry(message, dateResult.date);
-      } else if (extractedDate) {
-        // Fallback to the old extraction method if our new method fails
-        handleDateSpecificWorkInquiry(message, extractedDate);
+      if (isWorkScheduleQuestion) {
+        // Process as a schedule-related question
+        const processedResult = await chatgpt.processScheduleMessage(content);
+        
+        // Handle error case
+        if (processedResult.error) {
+          message.react('❓').catch(error => {
+            logger.error("Failed to react with emoji:", error);
+          });
+          message.reply(processedResult.response || "Sorry, I couldn't process that request.");
+          return;
+        }
+        
+        // Handle vague date references that need clarification
+        if (processedResult.needsDateClarification) {
+          message.react('🗓️').catch(error => {
+            logger.error("Failed to react with emoji:", error);
+          });
+          
+          logger.info("Requesting clarification for vague date reference", {
+            vagueReference: processedResult.vagueReference
+          });
+          
+          // Save the user state to track that we're waiting for date clarification
+          userStates.set(message.author.id, {
+            waitingForDateClarification: true,
+            vagueReference: processedResult.vagueReference,
+            timestamp: Date.now()
+          });
+          
+          message.reply({ 
+            content: processedResult.response,
+            allowedMentions: { repliedUser: true }
+          });
+          
+          // Set a timeout to clear the state after 5 minutes
+          setTimeout(() => {
+            const currentState = userStates.get(message.author.id);
+            if (currentState && currentState.waitingForDateClarification) {
+              userStates.delete(message.author.id);
+              logger.info(`Cleared date clarification state for user ${message.author.id} due to timeout`);
+            }
+          }, 5 * 60 * 1000);
+          
+          return;
+        }
+        
+        // Add appropriate emoji reaction based on working status
+        const emoji = processedResult.isWorking 
+          ? config.getRandomEmoji('working') 
+          : config.getRandomEmoji('notWorking');
+        
+        message.react(emoji).catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        
+        // Reply with the ChatGPT-generated response (already includes the date)
+        // Use options to allow Markdown formatting in the response
+        message.reply({ 
+          content: processedResult.response,
+          allowedMentions: { repliedUser: true }
+        });
+        
+        // Log the successful response
+        logger.info("Successfully responded to work schedule question", {
+          user: message.author.tag,
+          date: processedResult.extractedDate,
+          isWorking: processedResult.isWorking,
+          responseLength: processedResult.response.length
+        });
       } else {
-        // If no date was found, treat it as a question about today
-        handleTodayWorkInquiry(message);
+        // Process as general conversation
+        const response = await chatgpt.processGeneralMessage(content);
+        
+        // Add a random emoji reaction
+        const randomEmojiCategory = ['working', 'notWorking', 'confused'][Math.floor(Math.random() * 3)];
+        message.react(config.getRandomEmoji(randomEmojiCategory)).catch(error => {
+          logger.error("Failed to react with emoji:", error);
+        });
+        
+        // Check if we should fetch a GIF
+        if (response.gifQuery) {
+          // Send typing indicator during GIF fetch
+          message.channel.sendTyping().catch(error => {
+            logger.error("Failed to send typing indicator for GIF:", error);
+          });
+          
+          try {
+            // Fetch GIF from Tenor
+            const gifUrl = await fetchGif(response.gifQuery);
+            
+            if (gifUrl) {
+              // Reply with both text and GIF
+              message.reply({ 
+                content: response.text + '\n' + gifUrl,
+                allowedMentions: { repliedUser: true }
+              });
+              
+              logger.info("Successfully sent response with GIF", {
+                user: message.author.tag,
+                responseLength: response.text.length,
+                gifQuery: response.gifQuery
+              });
+            } else {
+              // If GIF couldn't be fetched, just send the text
+              message.reply({ 
+                content: response.text,
+                allowedMentions: { repliedUser: true }
+              });
+              
+              logger.info("GIF not found, sent text-only response", {
+                user: message.author.tag,
+                responseLength: response.text.length,
+                gifQuery: response.gifQuery
+              });
+            }
+          } catch (error) {
+            // If GIF fetch fails, just send the text
+            logger.error("Error fetching GIF", error);
+            message.reply({ 
+              content: response.text,
+              allowedMentions: { repliedUser: true }
+            });
+          }
+        } else {
+          // Reply with just the witty response text, allowing Markdown formatting
+          message.reply({ 
+            content: response.text,
+            allowedMentions: { repliedUser: true }
+          });
+          
+          // Log the successful general conversation
+          logger.info("Successfully responded to general conversation", {
+            user: message.author.tag,
+            responseLength: response.text.length
+          });
+        }
       }
+    } catch (error) {
+      logger.error("Error processing message", {
+        error: error.message,
+        stack: error.stack,
+        content: content
+      });
       
-    // Handle any remaining messages that might be work-related but don't match our patterns
-    } else if (containsPersonName || containsWork) {
-      const confusedResponse = responses.getRandomResponse(responses.confusedResponses);
-      
-      // React with a confused emoji
-      message.react(config.getRandomEmoji('confused'))
-        .catch(error => console.error("Failed to react with emoji:", error));
-      
-      // Reply with the confused response
-      message.reply(confusedResponse);
+      // Provide a fallback response
+      message.react('❓').catch(() => {});
+      message.reply("I seem to be having technical difficulties. Have you tried turning me off and on again?");
     }
   }
 });
 
 // Error handling
 client.on(Events.Error, (error) => {
-  console.error("Discord client error:", error);
+  logger.error("Discord client error:", error);
 });
 
 // Login to Discord with token
 client.login(process.env.DISCORD_TOKEN).catch((error) => {
-  console.error("Failed to log in to Discord:", error);
+  logger.error("Failed to log in to Discord:", error);
   process.exit(1);
 });

@@ -38,16 +38,26 @@ module.exports = {
   
   /**
    * Convert a Date object to YYYY-MM-DD format
+   * Use Eastern Time (ET) for Michigan timezone consistency
    */
   formatDate(date) {
     if (!(date instanceof Date) || isNaN(date.getTime())) {
       return null;
     }
     
-    // Use UTC methods to avoid timezone issues
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
+    // Convert to Eastern Time (Michigan timezone)
+    // Options for Eastern Time formatting
+    const options = { 
+      timeZone: 'America/Detroit',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    };
+    
+    // Get date parts in Eastern Time
+    const etDateString = new Intl.DateTimeFormat('en-US', options).format(date);
+    // Convert from MM/DD/YYYY to YYYY-MM-DD
+    const [month, day, year] = etDateString.split('/');
     
     return `${year}-${month}-${day}`;
   },
@@ -122,15 +132,34 @@ module.exports = {
       );
       
       if (targetDayIndex >= 0) {
-        // Use UTC methods for consistency
-        const todayUtc = new Date(Date.UTC(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate(),
-          12, 0, 0, 0 // Use noon to avoid DST issues
-        ));
+        // Get today's date components in Eastern Time (Michigan)
+        const etOptions = { 
+          timeZone: 'America/Detroit',
+          year: 'numeric', 
+          month: 'numeric', 
+          day: 'numeric' 
+        };
+        const etDateParts = new Intl.DateTimeFormat('en-US', etOptions).formatToParts(today);
         
-        const todayDayIndex = todayUtc.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+        // Extract date parts
+        const etYear = parseInt(etDateParts.find(part => part.type === 'year').value);
+        const etMonth = parseInt(etDateParts.find(part => part.type === 'month').value) - 1;
+        const etDay = parseInt(etDateParts.find(part => part.type === 'day').value);
+        
+        // Create date with Eastern Time components
+        const todayET = new Date(etYear, etMonth, etDay, 12, 0, 0, 0); // Use noon to avoid DST issues
+        
+        // Get the day of week in Eastern Time
+        const etDayIndex = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Detroit', weekday: 'short' })
+          .formatToParts(today)
+          .find(part => part.type === 'weekday')
+          .value;
+          
+        // Map the weekday name to index (0 = Sunday, 1 = Monday, etc.)
+        const weekdayMap = {
+          'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
+        };
+        const todayDayIndex = weekdayMap[etDayIndex];
         let daysToAdd;
         
         // Handle different qualifiers
@@ -150,54 +179,64 @@ module.exports = {
           if (daysToAdd === 0) daysToAdd = 7; // If today is the day mentioned, go to next week
         }
         
-        // Create a new date using UTC to avoid timezone issues
-        return new Date(Date.UTC(
-          todayUtc.getUTCFullYear(),
-          todayUtc.getUTCMonth(),
-          todayUtc.getUTCDate() + daysToAdd,
+        // Create a new date using Eastern Time components
+        return new Date(
+          etYear,
+          etMonth,
+          etDay + daysToAdd,
           12, 0, 0, 0
-        ));
+        );
       }
     }
     
-    // Check for common date phrases using UTC methods for consistency
-    const todayUtc = new Date(Date.UTC(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-      12, 0, 0, 0 // Use noon to avoid DST issues
-    ));
+    // Check for common date phrases using Eastern Time
+    // Get today's date components in Eastern Time (Michigan)
+    const etOptions = { 
+      timeZone: 'America/Detroit',
+      year: 'numeric', 
+      month: 'numeric', 
+      day: 'numeric' 
+    };
+    const etDateParts = new Intl.DateTimeFormat('en-US', etOptions).formatToParts(today);
+    
+    // Extract date parts
+    const etYear = parseInt(etDateParts.find(part => part.type === 'year').value);
+    const etMonth = parseInt(etDateParts.find(part => part.type === 'month').value) - 1;
+    const etDay = parseInt(etDateParts.find(part => part.type === 'day').value);
+    
+    // Today in Eastern Time
+    const todayET = new Date(etYear, etMonth, etDay, 12, 0, 0, 0); // Use noon to avoid DST issues
     
     if (/\btoday\b/i.test(text)) {
-      return todayUtc;
+      return todayET;
     }
     
     if (/\btomorrow\b/i.test(text) || /\bnext day\b/i.test(text)) {
-      return new Date(Date.UTC(
-        todayUtc.getUTCFullYear(),
-        todayUtc.getUTCMonth(),
-        todayUtc.getUTCDate() + 1,
+      return new Date(
+        etYear,
+        etMonth,
+        etDay + 1,
         12, 0, 0, 0
-      ));
+      );
     }
     
     if (/\byesterday\b/i.test(text) || /\bprevious day\b/i.test(text)) {
-      return new Date(Date.UTC(
-        todayUtc.getUTCFullYear(),
-        todayUtc.getUTCMonth(),
-        todayUtc.getUTCDate() - 1,
+      return new Date(
+        etYear,
+        etMonth,
+        etDay - 1,
         12, 0, 0, 0
-      ));
+      );
     }
     
     // Check for day-after-tomorrow and similar phrases
     if (/\bday after tomorrow\b/i.test(text) || /\bin 2 days\b/i.test(text) || /\bin two days\b/i.test(text)) {
-      return new Date(Date.UTC(
-        todayUtc.getUTCFullYear(),
-        todayUtc.getUTCMonth(),
-        todayUtc.getUTCDate() + 2,
+      return new Date(
+        etYear,
+        etMonth,
+        etDay + 2,
         12, 0, 0, 0
-      ));
+      );
     }
     
     // Look for holiday references in the current year
@@ -379,30 +418,76 @@ module.exports = {
   },
   
   /**
+   * Validate a date and ensure day of week is correct
+   * @param {Date} date - The date to validate
+   * @returns {Object} - Validated date information
+   */
+  validateDate(date) {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.error("Invalid date passed to validateDate:", date);
+      return {
+        isValid: false,
+        error: "Invalid Date"
+      };
+    }
+    
+    // Get the raw day of week from the Date object (most reliable)
+    const dayOfWeek = date.getDay(); // 0-6
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[dayOfWeek];
+    
+    // Get other date components
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-11
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthName = monthNames[month];
+    const day = date.getDate(); // 1-31
+    
+    // Format the date in a consistent way
+    const formattedDate = `${dayName}, ${monthName} ${day}, ${year}`;
+    
+    // Return all validated date information
+    return {
+      isValid: true,
+      date: date,
+      dayOfWeek: dayOfWeek, // 0-6
+      dayName: dayName,
+      year: year,
+      month: month, // 0-11
+      monthName: monthName,
+      day: day, // 1-31
+      formattedDate: formattedDate
+    };
+  },
+  
+  /**
    * Format a date in a human-readable format
+   * Always use Eastern Time (Michigan timezone)
    */
   formatDateForDisplay(date) {
     if (!(date instanceof Date) || isNaN(date.getTime())) {
       return "Invalid Date";
     }
     
-    // Extract the date components from the input date
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
-    
-    // Create a new UTC date with these components
-    // This avoids timezone shifts during formatting
-    const fixedDate = new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
-    
-    const options = { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      timeZone: 'UTC' // Use UTC timezone to ensure consistency
+    // Format the date in Eastern Time (America/Detroit)
+    const options = {
+      timeZone: 'America/Detroit',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     };
     
-    return fixedDate.toLocaleDateString('en-US', options);
+    // Use Intl formatter to get the date in Eastern Time
+    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
+    
+    // Get the day of week in Eastern Time for verification
+    const etDayOptions = { timeZone: 'America/Detroit', weekday: 'long' };
+    const actualDayName = new Intl.DateTimeFormat('en-US', etDayOptions).format(date);
+    
+    // Log for troubleshooting
+    console.log(`formatDateForDisplay: ET date=${formattedDate}, dayName=${actualDayName}`);
+    
+    return formattedDate;
   }
 };
